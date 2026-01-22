@@ -1,0 +1,118 @@
+.cube-container {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1100px;
+  transform-origin: center;
+  position: relative;
+}
+
+.cube {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: none;
+}
+
+.face {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  background: color-mix(in srgb, var(--cube-color, #3b82f6) 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cube-color, #3b82f6) 70%, transparent);
+  overflow: hidden;
+  backface-visibility: hidden;
+}
+
+.face.front {
+  background: color-mix(in srgb, var(--cube-color, #87CEEB) 20%, transparent);
+  border-color: rgba(255, 255, 255, 0.12);
+  opacity: 0.24;
+}
+
+.cube-shadow {
+  position: absolute;
+  width: 90px;
+  height: 26px;
+  background: rgba(0, 0, 0, 0.3);
+  filter: blur(26px);
+  border-radius: 999px;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.cube-label {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--text-main);
+  opacity: 0.7;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* الوجوه الستة */
+.front  { transform: translateZ(60px); }
+.back   { transform: rotateY(180deg) translateZ(60px); }
+.right  { transform: rotateY(90deg) translateZ(60px); }
+.left   { transform: rotateY(-90deg) translateZ(60px); }
+.top    { transform: rotateX(90deg) translateZ(60px); }
+.bottom { transform: rotateX(-90deg) translateZ(60px); }
+
+.face-content {
+  position: absolute;
+  inset: 0;
+}
+
+.line-h,
+.line-v {
+  position: absolute;
+  background: color-mix(in srgb, var(--detail-color, #ffffff) 75%, transparent);
+}
+
+.line-h {
+  height: 1px;
+  left: 6%;
+  right: 6%;
+}
+
+.line-h.drawer {
+  background: color-mix(in srgb, var(--detail-color, #ffffff) 85%, transparent);
+}
+
+.line-v {
+  width: 1px;
+  top: 6%;
+  bottom: 6%;
+}
+
+.door-panel {
+  position: absolute;
+  top: 6%;
+  bottom: 6%;
+  width: 55%;
+  border: 1px solid color-mix(in srgb, var(--detail-color, #ffffff) 85%, transparent);
+  background: color-mix(in srgb, var(--detail-color, #ffffff) 20%, transparent);
+}
+
+.door-panel.slide-a {
+  left: 6%;
+}
+
+.door-panel.slide-b {
+  right: 6%;
+}
+
+/* الحركة */
+@keyframes rotateCube {
+  0%   { transform: rotateX(0deg) rotateY(0deg); }
+  100% { transform: rotateX(360deg) rotateY(360deg); }
+}
