@@ -1,4 +1,4 @@
-import { useProject } from "../../../context/ProjectProvider";
+import { useProject } from "../../../context/useProject";
 import Panel from "../../ui/Panel";
 
 export default function BottomPanel() {

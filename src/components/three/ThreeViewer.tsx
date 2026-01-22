@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -154,10 +154,14 @@ function ViewerScene({
 }) {
   const { camera, gl, scene } = useThree();
   const rafRef = useRef<number | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const internalRendererRef = useRef<THREE.WebGLRenderer | null>(null);
 
   useEffect(() => {
     cameraRef.current = camera;
     rendererRef.current = gl as THREE.WebGLRenderer;
+    internalRendererRef.current = gl as THREE.WebGLRenderer;
+    sceneRef.current = scene;
     camera.position.set(2, 2, 2);
     camera.lookAt(0, 0, 0);
     const controls = controlsRef.current as unknown as {
@@ -168,18 +172,22 @@ function ViewerScene({
       controls.target.set(0, 0, 0);
       controls.update?.();
     }
-  }, [camera, resetToken, controlsRef, cameraRef, rendererRef]);
+  }, [camera, gl, scene, resetToken, controlsRef, cameraRef, rendererRef]);
 
   useEffect(() => {
-    if ("outputColorSpace" in gl) {
-      (gl as THREE.WebGLRenderer).outputColorSpace = THREE.SRGBColorSpace;
+    const renderer = internalRendererRef.current;
+    if (!renderer) return;
+    if ("outputColorSpace" in renderer) {
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
-    (gl as THREE.WebGLRenderer).toneMapping = THREE.ACESFilmicToneMapping;
-  }, [gl]);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  }, []);
 
   useEffect(() => {
-    scene.background = new THREE.Color(backgroundColor);
-  }, [scene, backgroundColor]);
+    const currentScene = sceneRef.current;
+    if (!currentScene) return;
+    currentScene.background = new THREE.Color(backgroundColor);
+  }, [backgroundColor]);
 
   useEffect(() => {
     const tick = () => {
@@ -195,30 +203,33 @@ function ViewerScene({
     };
   }, [controlsRef]);
 
-  const applyPreset = (preset: "perspective" | "top" | "front" | "left") => {
-    if (preset === "top") {
-      camera.position.set(0, 5, 0);
-    } else if (preset === "front") {
-      camera.position.set(0, 1.5, 4);
-    } else if (preset === "left") {
-      camera.position.set(-4, 1.5, 0);
-    } else {
-      camera.position.set(2, 2, 2);
-    }
-    camera.lookAt(0, 0, 0);
-    const controls = controlsRef.current as unknown as {
-      target?: THREE.Vector3;
-      update?: () => void;
-    } | null;
-    if (controls?.target) {
-      controls.target.set(0, 0, 0);
-      controls.update?.();
-    }
-  };
+  const applyPreset = useCallback(
+    (preset: "perspective" | "top" | "front" | "left") => {
+      if (preset === "top") {
+        camera.position.set(0, 5, 0);
+      } else if (preset === "front") {
+        camera.position.set(0, 1.5, 4);
+      } else if (preset === "left") {
+        camera.position.set(-4, 1.5, 0);
+      } else {
+        camera.position.set(2, 2, 2);
+      }
+      camera.lookAt(0, 0, 0);
+      const controls = controlsRef.current as unknown as {
+        target?: THREE.Vector3;
+        update?: () => void;
+      } | null;
+      if (controls?.target) {
+        controls.target.set(0, 0, 0);
+        controls.update?.();
+      }
+    },
+    [camera, controlsRef]
+  );
 
   useEffect(() => {
     applyPreset(cameraPreset);
-  }, [cameraPreset]);
+  }, [cameraPreset, applyPreset]);
 
   return (
     <>

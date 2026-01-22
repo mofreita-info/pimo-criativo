@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useProject } from "../../../context/ProjectProvider";
-import { Cube, CUBE_BASE_SIZE, updateCubePreview } from "../../ui/Cube";
+import { useProject } from "../../../context/useProject";
+import { Cube } from "../../ui/Cube";
+import { CUBE_BASE_SIZE, updateCubePreview } from "../../ui/cubeUtils";
 import ThreeViewer from "../../three/ThreeViewer";
 import WorkspaceBottomPanel from "./WorkspaceBottomPanel";
 
@@ -9,6 +10,7 @@ export default function Workspace() {
   const [rotation, setRotation] = useState({ x: 20, y: -30 });
   const [isAutoRotating, setIsAutoRotating] = useState(true);
   const [isUserControlling, setIsUserControlling] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [draggingBoxId, setDraggingBoxId] = useState<string | null>(null);
   const [snapLineX, setSnapLineX] = useState<number | null>(null);
   const wireframeMode = false;
@@ -144,6 +146,7 @@ export default function Workspace() {
         active: true,
         button: 2,
       };
+      setIsDragging(true);
       return;
     }
     if (!isUserControlling) return;
@@ -153,6 +156,7 @@ export default function Workspace() {
       active: true,
       button: 0,
     };
+    setIsDragging(true);
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -176,6 +180,7 @@ export default function Workspace() {
 
   const handlePointerUp = () => {
     dragRef.current.active = false;
+    setIsDragging(false);
   };
 
   const handleToggleControl = () => {
@@ -190,6 +195,7 @@ export default function Workspace() {
     dragRef.current.active = false;
     setIsUserControlling(false);
     setIsAutoRotating(true);
+    setIsDragging(false);
   };
 
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
@@ -321,7 +327,7 @@ export default function Workspace() {
                 height: "100%",
                 transformStyle: "preserve-3d",
                 transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-                transition: dragRef.current.active ? "none" : "transform 0.2s ease-out",
+                transition: isDragging ? "none" : "transform 0.2s ease-out",
                 cursor: isUserControlling ? "grab" : "pointer",
               }}
               onPointerDown={handlePointerDown}

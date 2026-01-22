@@ -1,4 +1,4 @@
-import { useProject } from "../../../context/ProjectProvider";
+import { useProject } from "../../../context/useProject";
 
 export default function RightPanel() {
   const { project, actions } = useProject();

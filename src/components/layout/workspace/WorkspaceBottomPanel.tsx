@@ -1,4 +1,4 @@
-import { useProject } from "../../../context/ProjectProvider";
+import { useProject } from "../../../context/useProject";
 import Panel from "../../ui/Panel";
 import CutListView from "../../ui/CutListView";
 import CutlistPanel from "../../panels/CutlistPanel";

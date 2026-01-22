@@ -1,5 +1,5 @@
 import Panel from "./Panel";
-import { useProject } from "../../context/ProjectProvider";
+import { useProject } from "../../context/useProject";
 
 type CutListRow = {
   id: string;

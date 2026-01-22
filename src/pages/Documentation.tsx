@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Panel from "../components/ui/Panel";
-import { useProject } from "../context/ProjectProvider";
+import { useProject } from "../context/useProject";
 
 type DocStat = {
   label: string;
@@ -133,7 +133,10 @@ const sections: DocSection[] = [
 
 export default function Documentation() {
   const { project, actions } = useProject();
-  const [stats, setStats] = useState(() => computeStats(project.boxes.length));
+  const stats = useMemo(
+    () => computeStats(project.boxes.length),
+    [project.boxes.length]
+  );
 
   const formatDateTime = (date: Date) => {
     const pad = (value: number) => String(value).padStart(2, "0");
@@ -154,12 +157,7 @@ export default function Documentation() {
     [project.changelog]
   );
 
-  useEffect(() => {
-    setStats(computeStats(project.boxes.length));
-  }, [project.boxes, project.changelog.length]);
-
   const refreshDocumentation = () => {
-    setStats(computeStats(project.boxes.length));
     actions.logChangelog("Documentação atualizada");
   };
 

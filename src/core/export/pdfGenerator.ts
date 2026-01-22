@@ -12,10 +12,6 @@ const getLastY = (doc: jsPDF, fallback: number) => {
   return last?.finalY ? last.finalY + 6 : fallback;
 };
 
-const adicionarImagemDoModulo = (_modulo: BoxModule, _doc: jsPDF, _startY: number) => {
-  // Placeholder para futuras imagens do módulo.
-};
-
 const addSectionTitle = (doc: jsPDF, title: string, y: number) => {
   doc.setFontSize(12);
   doc.text(title, 14, y);
@@ -76,7 +72,6 @@ export function gerarPdfIndustrial(boxes: BoxModule[]) {
     });
 
     cursorY = getLastY(doc, cursorY);
-    adicionarImagemDoModulo(box, doc, cursorY);
 
     addSectionTitle(doc, "Lista de Painéis", cursorY);
     autoTable(doc, {

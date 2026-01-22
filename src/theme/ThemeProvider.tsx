@@ -1,14 +1,8 @@
-import { createContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { DEFAULT_THEME_ID } from "./themes";
 import type { ThemeId } from "./themes";
-
-interface ThemeContextProps {
-  theme: ThemeId;
-  setTheme: (t: ThemeId) => void;
-}
-
-export const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
+import { ThemeContext } from "./themeContext";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ThemeId>(DEFAULT_THEME_ID);

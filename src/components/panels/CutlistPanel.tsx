@@ -1,5 +1,5 @@
 import Panel from "../ui/Panel";
-import { useProject } from "../../context/ProjectProvider";
+import { useProject } from "../../context/useProject";
 import { gerarModeloIndustrial } from "../../core/manufacturing/boxManufacturing";
 
 const tableStyle = {
