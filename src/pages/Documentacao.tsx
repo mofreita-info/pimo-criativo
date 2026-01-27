@@ -57,14 +57,14 @@ export default function Documentacao() {
           {"\n"}- Transições e cursores do Workspace movidos para classes CSS.
           {"\n"}- Handle vertical removido; resize agora é via handle lateral customizado.
           {"\n"}- Full Model Fix iniciado para ajuste de escala e centralização 3D.
-          {"\n"}- Página WeeklyRoadmap criada para planeamento semanal.
+          {"\n"}- ProjectRoadmap criado para planeamento por fases.
           {"\n"}- Bloco “Semana Atual” integrado ao Painel de Referência.
           {"\n"}- Semana 2 iniciada: HDRI, iluminação realista e preparação de sombras.
           {"\n"}- Materiais convertidos para MeshStandardMaterial com PBR base.
           {"\n"}- Correção estrutural dos painéis (sem painel dentro de painel).
           {"\n"}- Conteúdo do LeftPanel/RightPanel integrado ao container principal.
           {"\n"}- Remoção de scroll interno e ajuste de overflow/altura.
-          {"\n"}- Formulário para adicionar tarefas no WeeklyRoadmap.
+          {"\n"}- Formulário para adicionar tarefas no ProjectRoadmap.
           {"\n"}- Tarefas semanais persistidas no localStorage.
           {"\n"}- Painel de Referência exibe tarefas adicionadas pelo utilizador.
           {"\n"}- Status editável das tarefas com badge por estado.
@@ -75,7 +75,7 @@ export default function Documentacao() {
           {"\n"}- Texturas PBR reais carregadas de public/textures.
           {"\n"}- HDRI real carregado de public/hdr.
           {"\n"}- Ajustes finos de iluminação e sombras do piso.
-          {"\n"}- WeeklyRoadmap substituído por ProjectRoadmap em Phases.
+          {"\n"}- Roadmap semanal removido e substituído por Phases.
           {"\n"}- CRUD completo de Phases e tarefas com persistência.
           {"\n"}- Sistema de Materiais Profissional iniciado com presets reais.
           {"\n"}- Painel lateral de materiais com preview e ajustes.
@@ -162,12 +162,12 @@ export default function Documentacao() {
           {"\n"}- Usar .workspace-placeholder.is-controlling para interação.
           {"\n"}- Usar .panel-resizer para resize horizontal.
           {"\n"}- Usar normalização de escala no ThreeViewer.
-          {"\n"}- Manter tarefas semanais atualizadas no WeeklyRoadmap.
+          {"\n"}- Manter Phases atualizadas no ProjectRoadmap.
           {"\n"}- Validar tarefas pendentes diretamente no Painel de Referência.
           {"\n"}- Ajustar iluminação HDRI sem quebrar o enquadramento da câmera.
           {"\n"}- Garantir layout sem “painel dentro de painel”.
           {"\n"}- Adicionar tarefas via formulário e refletir no Painel de Referência.
-          {"\n"}- Ajustar status direto na tabela do WeeklyRoadmap.
+          {"\n"}- Ajustar status direto no ProjectRoadmap.
           {"\n"}- Validar sombras suaves no piso com PCFSoft.
           {"\n"}- Trocar HDRI embutido por arquivo em public/hdr.
           {"\n"}- Gerir Phases e tarefas diretamente no ProjectRoadmap.

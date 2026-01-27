@@ -1,13 +1,13 @@
 import { useState } from "react";
 import Panel from "../../ui/Panel";
 import { useProject } from "../../../context/useProject";
-import type { ModelPart } from "../../../context/materialContext";
 import type { MaterialCategory } from "../../../core/materials/materialPresets";
+import type { ModelPart } from "../../../context/materialUtils";
 import {
   materialCategoryOptions,
   modelPartOptions,
-  useMaterialSystem,
-} from "../../../context/materialContext";
+} from "../../../context/materialUtils";
+import { useMaterialSystem } from "../../../context/materialContext";
 import { getPresetById, getPresetsByCategory } from "../../../core/materials/materialPresets";
 
 export default function MaterialPanel() {

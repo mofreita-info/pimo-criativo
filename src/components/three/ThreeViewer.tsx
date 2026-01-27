@@ -1,10 +1,10 @@
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { RGBELoader } from "three-stdlib";
 import * as THREE from "three";
-import type { MaterialSystemState, ModelPart } from "../../context/materialContext";
+import type { MaterialSystemState, ModelPart } from "../../context/materialUtils";
 import { getPresetById } from "../../core/materials/materialPresets";
 
 type ThreeViewerProps = {
@@ -241,7 +241,7 @@ function Model({
 }) {
   const { scene } = useGLTF(url);
 
-  const coloredScene = useMemo(() => {
+  const { coloredScene, finalBox } = useMemo(() => {
     const cloned = scene.clone(true);
     let index = 0;
     cloned.traverse((child) => {
@@ -269,30 +269,33 @@ function Model({
         }
       }
     });
-    return cloned;
-  }, [scene, colorize, materialConfig]);
-
-  useEffect(() => {
-    const initialBox = new THREE.Box3().setFromObject(coloredScene);
+    const initialBox = new THREE.Box3().setFromObject(cloned);
     const size = new THREE.Vector3();
     initialBox.getSize(size);
     const maxDim = Math.max(size.x, size.y, size.z, 1);
     const targetSize = 2;
     const scale = targetSize / maxDim;
-    coloredScene.scale.setScalar(scale);
+    cloned.scale.setScalar(scale);
 
-    const scaledBox = new THREE.Box3().setFromObject(coloredScene);
+    const scaledBox = new THREE.Box3().setFromObject(cloned);
     const center = new THREE.Vector3();
     scaledBox.getCenter(center);
-    coloredScene.position.sub(center);
+    const centeredPosition = cloned.position.clone().sub(center);
+    cloned.position.copy(centeredPosition);
 
-    const alignedBox = new THREE.Box3().setFromObject(coloredScene);
+    const alignedBox = new THREE.Box3().setFromObject(cloned);
     const minY = alignedBox.min.y;
-    coloredScene.position.y -= minY;
+    const alignedPosition = cloned.position.clone();
+    alignedPosition.y -= minY;
+    cloned.position.copy(alignedPosition);
 
-    const finalBox = new THREE.Box3().setFromObject(coloredScene);
+    const finalBox = new THREE.Box3().setFromObject(cloned);
+    return { coloredScene: cloned, finalBox };
+  }, [scene, colorize, materialConfig]);
+
+  useLayoutEffect(() => {
     onCentered(finalBox);
-  }, [coloredScene, onCentered]);
+  }, [finalBox, onCentered]);
 
   useEffect(() => {
     coloredScene.traverse((child) => {
@@ -416,6 +419,7 @@ function ViewerScene({
   rendererRef: React.MutableRefObject<THREE.WebGLRenderer | null>;
 }) {
   const { camera, gl, scene, size } = useThree();
+  const set = useThree((state) => state.set);
   const rafRef = useRef<number | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const internalRendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -455,12 +459,13 @@ function ViewerScene({
     currentScene.background = new THREE.Color(backgroundColor);
   }, [backgroundColor]);
 
-  useEffect(() => {
-    if (camera instanceof THREE.PerspectiveCamera) {
-      camera.aspect = size.width / size.height;
-      camera.updateProjectionMatrix();
-    }
-  }, [camera, size]);
+  useLayoutEffect(() => {
+    if (!(camera instanceof THREE.PerspectiveCamera)) return;
+    const nextCamera = camera.clone();
+    nextCamera.aspect = size.width / size.height;
+    nextCamera.updateProjectionMatrix();
+    set({ camera: nextCamera });
+  }, [camera, size.width, size.height, set]);
 
   useEffect(() => {
     const tick = () => {
