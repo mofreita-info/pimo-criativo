@@ -102,7 +102,7 @@ export const updateCubePreview = (
 
   const scaleX = clamp((largura / maxDim) * 1.2, 0.45, 1.6);
   const scaleY = clamp((altura / maxDim) * 1.2, 0.45, 1.6);
-  const scaleZ = clamp((profundidade / maxDim) * 1.2, 0.45, 1.6);
+  const scaleZ = clamp((profundidade / maxDim) * 1.2, 0.8, 1.6);
 
   const hasDrawers = (boxModule?.gavetas ?? 0) > 0;
   const doorType = boxModule?.portaTipo ?? "sem_porta";

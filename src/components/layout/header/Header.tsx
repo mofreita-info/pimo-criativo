@@ -7,6 +7,7 @@ interface HeaderProps {
   docsOpen: boolean;
   onShowRoadmap: () => void;
   roadmapOpen: boolean;
+  onShowTestViewer: () => void;
 }
 
 export default function Header({
@@ -14,6 +15,7 @@ export default function Header({
   docsOpen,
   onShowRoadmap,
   roadmapOpen,
+  onShowTestViewer,
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
 
@@ -82,6 +84,20 @@ export default function Header({
           }}
         >
           Roadmap
+        </button>
+        <button
+          onClick={onShowTestViewer}
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "var(--text-main)",
+            padding: "6px 10px",
+            borderRadius: "var(--radius)",
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          🧪
         </button>
         <button
           onClick={onToggleDocs}

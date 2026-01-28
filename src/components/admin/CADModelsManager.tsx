@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import Panel from "../ui/Panel";
-import ThreeViewer from "../three/ThreeViewer";
+import ThreeViewer from "../ThreeViewer";
 import type { CadModel } from "../../core/cad/cadModels";
 import { useCadModels } from "../../hooks/useCadModels";
 
@@ -179,8 +179,7 @@ export default function CADModelsManager() {
             <ThreeViewer
               modelUrl={form.arquivo}
               height={300}
-              backgroundColor="#1e293b"
-              showGrid={false}
+              backgroundColor="#f0f0f0"
               showFloor={false}
               colorize={true}
             />
