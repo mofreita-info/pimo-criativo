@@ -1,5 +1,6 @@
 import Panel from "./Panel";
 import { useProject } from "../../context/useProject";
+import { cutlistComPrecoFromBox } from "../../core/manufacturing/cutlistFromBoxes";
 
 type CutListRow = {
   id: string;
@@ -25,31 +26,25 @@ export default function CutListView() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
-      {project.boxes.map((box, index) => {
-        const isSelected = box.id === project.selectedBoxId;
-        const rows: CutListRow[] =
-          box.cutListComPreco.length > 0
-            ? box.cutListComPreco.map((item) => ({
-                id: item.id,
-                nome: item.nome,
-                largura: item.dimensoes.largura,
-                altura: item.dimensoes.altura,
-                profundidade: item.dimensoes.profundidade,
-                espessura: item.espessura,
-                quantidade: item.quantidade,
-                precoUnitario: item.precoUnitario,
-                precoTotal: item.precoTotal,
-              }))
-            : box.cutList.map((item) => ({
-                id: item.id,
-                nome: item.nome,
-                largura: item.dimensoes.largura,
-                altura: item.dimensoes.altura,
-                profundidade: item.dimensoes.profundidade,
-                espessura: item.espessura,
-                quantidade: item.quantidade,
-              }));
+      {(project.boxes ?? []).map((box, index) => {
+        const cutlistComPreco = cutlistComPrecoFromBox(box);
+        const isSelected = box.id === project.selectedBoxId || box.id === project.selectedWorkspaceBoxId;
+        const rows: CutListRow[] = cutlistComPreco.map((item) => ({
+          id: item.id,
+          nome: item.nome,
+          largura: item.dimensoes.largura,
+          altura: item.dimensoes.altura,
+          profundidade: item.dimensoes.profundidade,
+          espessura: item.espessura,
+          quantidade: item.quantidade,
+          precoUnitario: item.precoUnitario,
+          precoTotal: item.precoTotal,
+        }));
         const totalPecas = rows.reduce((sum, item) => sum + item.quantidade, 0);
+        const precoTotal =
+          cutlistComPreco.length > 0
+            ? cutlistComPreco.reduce((s, i) => s + (i.precoTotal ?? 0), 0)
+            : 0;
 
         const title = box.nome || `Caixa ${index + 1}`;
 
@@ -155,7 +150,7 @@ export default function CutListView() {
                 <div>
                   <div style={microTextStyle}>Preço estimado</div>
                   <div style={{ fontSize: 12, color: "var(--text-main)" }}>
-                    {box.precoTotalPecas > 0 ? `${box.precoTotalPecas.toFixed(2)} €` : "--"}
+                    {precoTotal > 0 ? `${precoTotal.toFixed(2)} €` : "--"}
                   </div>
                 </div>
               </div>

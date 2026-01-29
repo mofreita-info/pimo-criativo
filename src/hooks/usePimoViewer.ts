@@ -27,6 +27,8 @@ export const usePimoViewer = (
   options?: ViewerOptions
 ): PimoViewerAPI => {
   const viewerRef = useRef<Viewer | null>(null);
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
   const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
   const onBoxSelectedRef = useRef<((id: string | null) => void) | null>(null);
 
@@ -34,14 +36,9 @@ export const usePimoViewer = (
     const container = containerRef.current;
     if (!container) return;
 
-    // Se já existe um viewer, apenas atualiza as opções
-    if (viewerRef.current) {
-      // Atualizar opções do viewer existente se necessário
-      // (neste caso, vamos manter o viewer existente e não recriar)
-      return;
-    }
+    if (viewerRef.current) return;
 
-    viewerRef.current = new Viewer(container, options);
+    viewerRef.current = new Viewer(container, optionsRef.current ?? {});
     viewerRef.current.setOnBoxSelected((id) => {
       setSelectedBoxId(id);
       onBoxSelectedRef.current?.(id);
@@ -51,7 +48,7 @@ export const usePimoViewer = (
       viewerRef.current?.dispose();
       viewerRef.current = null;
     };
-  }, [containerRef, options]);
+  }, [containerRef]);
 
   const setOnBoxSelected = useCallback((callback: (id: string | null) => void) => {
     onBoxSelectedRef.current = callback;

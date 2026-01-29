@@ -1,5 +1,13 @@
 import { useMemo, useState } from "react";
 import { useProject } from "../../../context/useProject";
+import {
+  cutlistComPrecoFromBoxes,
+  ferragensFromBoxes,
+} from "../../../core/manufacturing/cutlistFromBoxes";
+import {
+  calcularPrecoTotalPecas,
+  calcularPrecoTotalProjeto,
+} from "../../../core/pricing/pricing";
 
 type RightToolsItem = {
   id: string;
@@ -32,9 +40,20 @@ const tools: RightToolsItem[] = [
 
 export default function RightToolsBar() {
   const { actions, viewerSync, project } = useProject();
+  // Single Source of Truth: Resultados Atuais derivados de project.boxes (não project.resultados/acessorios)
+  const boxes = project.boxes ?? [];
+  const cutlistFromBoxes = useMemo(
+    () => cutlistComPrecoFromBoxes(boxes),
+    [boxes]
+  );
+  const ferragensFromBoxesList = useMemo(
+    () => ferragensFromBoxes(boxes),
+    [boxes]
+  );
+  const totalPecas =
+    cutlistFromBoxes.reduce((sum, item) => sum + item.quantidade, 0);
   const totalFerragens =
-    project.acessorios?.reduce((sum, item) => sum + item.quantidade, 0) ?? 0;
-  const totalPecas = project.resultados?.numeroPecas ?? 0;
+    ferragensFromBoxesList.reduce((sum, a) => sum + a.quantidade, 0);
   const totalItens = totalPecas + totalFerragens;
   const [modal, setModal] = useState<ModalType>(null);
   const [savedProjects, setSavedProjects] = useState(actions.listSavedProjects());
@@ -160,21 +179,39 @@ export default function RightToolsBar() {
       payload.imagem = renderResult?.dataUrl ?? null;
     }
 
+    // Single Source of Truth: cutlist, ferragens e precos derivados de project.boxes
+    const boxes = project.boxes ?? [];
+    const cutlistFromBoxes = cutlistComPrecoFromBoxes(boxes);
+    const ferragensFromBoxesList = ferragensFromBoxes(boxes);
+    const totalPecasFromBoxes =
+      cutlistFromBoxes.length > 0
+        ? calcularPrecoTotalPecas(cutlistFromBoxes)
+        : null;
+    const totalAcessoriosFromBoxes =
+      ferragensFromBoxesList.length > 0
+        ? ferragensFromBoxesList.reduce((s, a) => s + a.precoTotal, 0)
+        : null;
+    const totalProjetoFromBoxes =
+      totalPecasFromBoxes != null && totalAcessoriosFromBoxes != null
+        ? calcularPrecoTotalProjeto(totalPecasFromBoxes + totalAcessoriosFromBoxes)
+        : null;
+
     if (sendSelections.cutlist) {
-      payload.cutlist = project.cutList ?? null;
+      payload.cutlist = cutlistFromBoxes.length > 0 ? cutlistFromBoxes : null;
     }
 
     if (sendSelections.ferragens) {
-      payload.ferragens = project.design?.acessorios ?? null;
+      payload.ferragens =
+        ferragensFromBoxesList.length > 0 ? ferragensFromBoxesList : null;
     }
 
     if (sendSelections.precos) {
       payload.precos = {
-        cutListComPreco: project.cutListComPreco ?? null,
-        acessorios: project.acessorios ?? null,
-        totalPecas: project.precoTotalPecas ?? null,
-        totalAcessorios: project.precoTotalAcessorios ?? null,
-        totalProjeto: project.precoTotalProjeto ?? null,
+        cutListComPreco: cutlistFromBoxes.length > 0 ? cutlistFromBoxes : null,
+        acessorios: ferragensFromBoxesList.length > 0 ? ferragensFromBoxesList : null,
+        totalPecas: totalPecasFromBoxes,
+        totalAcessorios: totalAcessoriosFromBoxes,
+        totalProjeto: totalProjetoFromBoxes,
       };
     }
 

@@ -13,12 +13,13 @@ export class CameraManager {
   private target: THREE.Vector3;
 
   constructor(options: CameraOptions = {}) {
-    this.camera = new THREE.PerspectiveCamera(options.fov ?? 50, 1, options.near ?? 0.1, options.far ?? 1000);
+    this.camera = new THREE.PerspectiveCamera(options.fov ?? 50, 1, options.near ?? 0.01, options.far ?? 5000);
     const position = options.position ?? { x: 3, y: 2, z: 5 };
     this.camera.position.set(position.x, position.y, position.z);
-    const target = options.target ?? { x: 0, y: 0.5, z: 0 };
+    const target = options.target ?? { x: 0, y: 0, z: 0 };
     this.target = new THREE.Vector3(target.x, target.y, target.z);
     this.camera.lookAt(this.target);
+    this.camera.updateProjectionMatrix();
   }
 
   setSize(width: number, height: number) {

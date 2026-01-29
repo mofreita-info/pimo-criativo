@@ -33,7 +33,13 @@ export default function Header({
       }}
     >
       {/* Logótipo */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <div 
+        style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}
+        onClick={() => {
+          window.history.pushState({}, "", "/");
+          window.dispatchEvent(new PopStateEvent("popstate"));
+        }}
+      >
         <div
           style={{
             width: 28,

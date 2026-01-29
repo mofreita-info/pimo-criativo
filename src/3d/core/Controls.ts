@@ -16,9 +16,9 @@ export class Controls {
   constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement, options: ControlsOptions = {}) {
     this.controls = new OrbitControls(camera, domElement);
     this.controls.enableDamping = options.enableDamping ?? true;
-    this.controls.dampingFactor = options.dampingFactor ?? 0.08;
-    if (options.minDistance !== undefined) this.controls.minDistance = options.minDistance;
-    if (options.maxDistance !== undefined) this.controls.maxDistance = options.maxDistance;
+    this.controls.dampingFactor = options.dampingFactor ?? 0.05;
+    this.controls.minDistance = options.minDistance ?? 0.5;
+    this.controls.maxDistance = options.maxDistance ?? 2000;
     if (options.minPolarAngle !== undefined) this.controls.minPolarAngle = options.minPolarAngle;
     if (options.maxPolarAngle !== undefined) this.controls.maxPolarAngle = options.maxPolarAngle;
   }

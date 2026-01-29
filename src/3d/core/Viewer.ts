@@ -73,8 +73,14 @@ export class Viewer {
   private pointer = new THREE.Vector2();
   private selectedBoxId: string | null = null;
   private onBoxSelected: ((id: string | null) => void) | null = null;
+  private readonly _boundingBox = new THREE.Box3();
+  private readonly _center = new THREE.Vector3();
+  private _initialCanvasSizeDone = false;
 
   constructor(container: HTMLElement, options: ViewerOptions = {}) {
+    if (!container) {
+      throw new Error("Viewer: container is required");
+    }
     this.container = container;
     const background = options.background ?? options.scene?.background;
     this.sceneManager = new SceneManager({
@@ -97,11 +103,12 @@ export class Viewer {
       ? null
       : new Controls(this.cameraManager.camera, this.rendererManager.renderer.domElement, options.controls);
 
+    this.updateCameraTarget();
+
     this.rendererManager.renderer.domElement.addEventListener("click", this.handleCanvasClick);
 
-    this.handleResize();
     this.start();
-    this.attachResizeObserver();
+    window.addEventListener("resize", this.updateCanvasSize);
   }
 
   loadHDRI(url: string, options?: { setBackground?: boolean }) {
@@ -176,7 +183,7 @@ export class Viewer {
 
   setCameraFrontView() {
     this.cameraManager.setPosition(0, 2.2, 6);
-    this.cameraManager.setTarget(0, 1, 0);
+    this.updateCameraTarget();
   }
 
   addBox(id: string, options: BoxOptions = {}): boolean {
@@ -189,6 +196,7 @@ export class Viewer {
       boxOptions.material = material.material;
     }
     const box = buildBoxLegacy(boxOptions);
+    box.frustumCulled = false;
     const { width, height, depth } = this.getBoxDimensions(opts);
     const index = opts.index ?? this.getNextBoxIndex();
     const position = opts.position ?? { x: 0, y: height / 2, z: 0 };
@@ -206,6 +214,7 @@ export class Viewer {
       material,
     });
     this.reflowBoxes();
+    this.updateCameraTarget();
     return true;
   }
 
@@ -276,6 +285,9 @@ export class Viewer {
     if (heightChanged) {
       this.updateModelsVerticalPosition(entry);
     }
+    if (widthChanged || indexChanged) {
+      this.updateCameraTarget();
+    }
     return true;
   }
 
@@ -285,6 +297,7 @@ export class Viewer {
     if (!Number.isFinite(index) || index < 0) return false;
     entry.index = index;
     this.reflowBoxes();
+    this.updateCameraTarget();
     return true;
   }
 
@@ -331,6 +344,7 @@ export class Viewer {
     }
     this.boxes.delete(id);
     this.reflowBoxes();
+    this.updateCameraTarget();
     return true;
   }
 
@@ -402,16 +416,41 @@ export class Viewer {
   setBoxGap(gap: number) {
     this.boxGap = Math.max(0, gap);
     this.reflowBoxes();
+    this.updateCameraTarget();
   }
 
   reflowBoxes() {
     let cursorX = 0;
     const ordered = Array.from(this.boxes.values()).sort((a, b) => a.index - b.index);
     ordered.forEach((entry) => {
+      entry.mesh.frustumCulled = false;
       entry.mesh.position.set(cursorX + entry.width / 2, entry.height / 2, 0);
       entry.mesh.updateMatrixWorld();
       cursorX += entry.width + this.boxGap;
     });
+  }
+
+  private updateCameraTarget() {
+    if (this.boxes.size === 0) {
+      this.cameraManager.setTarget(0, 0, 0);
+      if (this.controls) {
+        this.controls.controls.target.set(0, 0, 0);
+        this.cameraManager.camera.lookAt(0, 0, 0);
+        this.controls.update();
+      }
+      return;
+    }
+    this._boundingBox.makeEmpty();
+    this.boxes.forEach((entry) => {
+      this._boundingBox.expandByObject(entry.mesh);
+    });
+    this._boundingBox.getCenter(this._center);
+    this.cameraManager.setTarget(this._center.x, this._center.y, this._center.z);
+    if (this.controls) {
+      this.controls.controls.target.copy(this._center);
+      this.cameraManager.camera.lookAt(this._center);
+      this.controls.update();
+    }
   }
 
   private getBoxDimensions(options?: BoxOptions) {
@@ -618,20 +657,22 @@ export class Viewer {
     return createWoodMaterial(preset.maps, { ...preset.options, anisotropy }, loader);
   }
 
-  private attachResizeObserver() {
-    this.resizeObserver = new ResizeObserver(() => this.handleResize());
-    this.resizeObserver.observe(this.container);
-  }
 
-  private handleResize() {
-    const width = this.container.clientWidth || 1;
-    const height = this.container.clientHeight || 1;
-    this.rendererManager.setSize(width, height);
-    this.cameraManager.setSize(width, height);
-  }
+  private updateCanvasSize = () => {
+    if (!this.container) return;
+    const w = this.container.clientWidth ?? 1;
+    const h = this.container.clientHeight ?? 1;
+    this.rendererManager.renderer.setSize(w, h);
+    this.cameraManager.camera.aspect = w / h;
+    this.cameraManager.camera.updateProjectionMatrix();
+  };
 
   private start() {
     const animate = () => {
+      if (this.container && !this._initialCanvasSizeDone) {
+        this.updateCanvasSize();
+        this._initialCanvasSizeDone = true;
+      }
       this.controls?.update();
       this.rendererManager.render(this.sceneManager.scene, this.cameraManager.camera);
       this.rafId = requestAnimationFrame(animate);
@@ -643,6 +684,7 @@ export class Viewer {
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
     }
+    window.removeEventListener("resize", this.updateCanvasSize);
     this.resizeObserver?.disconnect();
     this.controls?.dispose();
     this.rendererManager.renderer.domElement.removeEventListener("click", this.handleCanvasClick);

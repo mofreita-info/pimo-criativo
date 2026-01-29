@@ -183,10 +183,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           0,
           null
         );
+        const nextWorkspaceBoxes = [...prev.workspaceBoxes, newBox];
+        const nextPrev = { ...prev, workspaceBoxes: nextWorkspaceBoxes };
+        const boxes = buildBoxesFromWorkspace(nextPrev);
         return recomputeState(
           prev,
           {
-            workspaceBoxes: [...prev.workspaceBoxes, newBox],
+            workspaceBoxes: nextWorkspaceBoxes,
+            boxes,
             selectedWorkspaceBoxId: newBox.id,
             selectedCaixaId: newBox.id,
             selectedCaixaModelUrl: null,
@@ -217,10 +221,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           posicaoX_mm: 0,
           modelId: selected.modelId ?? null,
         };
+        const nextWorkspaceBoxes = [...prev.workspaceBoxes, newBox];
+        const nextPrev = { ...prev, workspaceBoxes: nextWorkspaceBoxes };
+        const boxes = buildBoxesFromWorkspace(nextPrev);
         return recomputeState(
           prev,
           {
-            workspaceBoxes: [...prev.workspaceBoxes, newBox],
+            workspaceBoxes: nextWorkspaceBoxes,
+            boxes,
             selectedWorkspaceBoxId: newBox.id,
             selectedCaixaId: newBox.id,
             selectedCaixaModelUrl: null,
@@ -249,10 +257,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           (box) => box.id !== prev.selectedWorkspaceBoxId
         );
         const nextSelected = filtered[0];
+        const nextPrev = { ...prev, workspaceBoxes: filtered };
+        const boxes = buildBoxesFromWorkspace(nextPrev);
         return recomputeState(
           prev,
           {
             workspaceBoxes: filtered,
+            boxes,
             selectedWorkspaceBoxId: nextSelected.id,
             selectedCaixaId: nextSelected.id,
             selectedCaixaModelUrl: getModelUrlFromStorage(nextSelected.modelId),
@@ -270,6 +281,35 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
     removeWorkspaceBox: () => {
       actions.removeBox();
+    },
+
+    removeWorkspaceBoxById: (boxId) => {
+      updateProject((prev) => {
+        if (prev.workspaceBoxes.length <= 1) return prev;
+        const filtered = prev.workspaceBoxes.filter((box) => box.id !== boxId);
+        if (filtered.length === prev.workspaceBoxes.length) return prev;
+        const nextSelected = filtered[0];
+        const nextPrev = { ...prev, workspaceBoxes: filtered };
+        const boxes = buildBoxesFromWorkspace(nextPrev);
+        const removed = prev.workspaceBoxes.find((b) => b.id === boxId);
+        return recomputeState(
+          prev,
+          {
+            workspaceBoxes: filtered,
+            boxes,
+            selectedWorkspaceBoxId: nextSelected.id,
+            selectedCaixaId: nextSelected.id,
+            selectedCaixaModelUrl: getModelUrlFromStorage(nextSelected.modelId),
+            dimensoes: nextSelected.dimensoes,
+            changelog: appendChangelog(prev.changelog, {
+              timestamp: new Date(),
+              type: "box",
+              message: `Caixote removido: ${removed?.nome ?? "Caixa"}`,
+            }),
+          },
+          true
+        );
+      });
     },
 
     selectBox: (boxId) => {

@@ -144,6 +144,7 @@ export interface ProjectActions {
   duplicateWorkspaceBox: () => void;
   removeBox: () => void;
   removeWorkspaceBox: () => void;
+  removeWorkspaceBoxById: (boxId: string) => void;
   selectBox: (boxId: string) => void;
   updateCaixaModelId: (caixaId: string, modelId: string | null) => void;
   renameBox: (nome: string) => void;

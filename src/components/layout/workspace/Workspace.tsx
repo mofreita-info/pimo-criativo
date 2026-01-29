@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useProject } from "../../../context/useProject";
 import { usePimoViewer } from "../../../hooks/usePimoViewer";
 import { useCalculadoraSync } from "../../../hooks/useCalculadoraSync";
@@ -18,11 +18,15 @@ export default function Workspace({
 }: WorkspaceProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { project, actions } = useProject();
-  const viewerApi = usePimoViewer(containerRef, {
-    background: viewerBackground,
-    ...viewerOptions,
-    skipInitialBox: true,
-  });
+  const viewerOptionsStable = useMemo(
+    () => ({
+      background: viewerBackground,
+      ...viewerOptions,
+      skipInitialBox: true as const,
+    }),
+    [viewerBackground, viewerOptions]
+  );
+  const viewerApi = usePimoViewer(containerRef, viewerOptionsStable);
   const { registerViewerApi } = usePimoViewerContext();
 
   useEffect(() => {

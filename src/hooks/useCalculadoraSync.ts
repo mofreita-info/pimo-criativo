@@ -20,6 +20,8 @@ export const useCalculadoraSync = (
   materialName?: string
 ) => {
   const boxesRef = useRef<BoxModule[]>(boxes);
+  const viewerApiRef = useRef(viewerApi);
+  viewerApiRef.current = viewerApi;
   const stateRef = useRef<Map<string, BoxState>>(new Map());
 
   useEffect(() => {
@@ -27,6 +29,8 @@ export const useCalculadoraSync = (
   }, [boxes]);
 
   const syncFromCalculator = useCallback(() => {
+    const api = viewerApiRef.current;
+    if (!api) return;
     const currentBoxes = boxesRef.current ?? [];
     const nextState = new Map<string, BoxState>();
     const currentIds = new Set<string>();
@@ -46,34 +50,35 @@ export const useCalculadoraSync = (
       const resolvedMaterialName = box.material ?? materialName ?? "mdf";
 
       if (!stateRef.current.has(box.id)) {
-        viewerApi.addBox(box.id, { width, height, depth, materialName: resolvedMaterialName, index });
+        api.addBox(box.id, { width, height, depth, materialName: resolvedMaterialName, index });
       } else {
-        viewerApi.updateBox(box.id, { width, height, depth, materialName: resolvedMaterialName });
+        api.updateBox(box.id, { width, height, depth, materialName: resolvedMaterialName });
         const prevIndex = stateRef.current.get(box.id)?.index;
         if (prevIndex !== undefined && prevIndex !== index) {
-          viewerApi.setBoxIndex(box.id, index);
+          api.setBoxIndex(box.id, index);
         }
       }
     });
 
     Array.from(stateRef.current.keys()).forEach((id) => {
       if (!currentIds.has(id)) {
-        viewerApi.removeBox(id);
+        api.removeBox(id);
       }
     });
 
     stateRef.current = nextState;
-  }, [viewerApi, materialName]);
+  }, [materialName]);
 
   useEffect(() => {
     syncFromCalculator();
   }, [boxes, syncFromCalculator]);
 
   useEffect(() => {
-    if (gap !== undefined && Number.isFinite(gap)) {
-      viewerApi.setBoxGap(gap);
+    const api = viewerApiRef.current;
+    if (gap !== undefined && Number.isFinite(gap) && api) {
+      api.setBoxGap(gap);
     }
-  }, [gap, viewerApi]);
+  }, [gap]);
 
   return { syncFromCalculator };
 };

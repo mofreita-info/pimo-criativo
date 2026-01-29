@@ -1,11 +1,16 @@
+import { useMemo } from "react";
 import { useProject } from "../../context/useProject";
+import { cutlistComPrecoFromBoxes } from "../../core/manufacturing/cutlistFromBoxes";
 
 export default function CutListTable() {
   const { project } = useProject();
-  const cutList = project.cutListComPreco;
+  const cutList = useMemo(
+    () => cutlistComPrecoFromBoxes(project.boxes ?? []),
+    [project.boxes]
+  );
 
   if (!cutList || cutList.length === 0) {
-    return <p>Nenhuma peça gerada ainda.</p>;
+    return <p>Nenhuma peça. Adicione caixas no painel direito.</p>;
   }
 
   return (

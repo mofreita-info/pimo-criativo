@@ -33,10 +33,17 @@ export default function LeftPanel() {
 
   return (
     <aside className="panel-content panel-content--side">
-      {/* Título da Secção */}
+      {/* Caixa selecionada */}
       <div className="section-title">
-        Definições
+        {selectedBox
+          ? `Caixa selecionada: ${selectedBox.nome}`
+          : "Definições"}
       </div>
+      {selectedBox && (
+        <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>
+          Edite largura, altura, profundidade, prateleiras e material abaixo.
+        </p>
+      )}
 
       <Panel title="NOME DE PROJETO">
         <input

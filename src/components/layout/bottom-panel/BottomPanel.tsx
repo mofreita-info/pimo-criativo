@@ -1,27 +1,46 @@
+import { useMemo } from "react";
 import { useProject } from "../../../context/useProject";
 import Panel from "../../ui/Panel";
 import CutlistPanel from "../../panels/CutlistPanel";
+import {
+  cutlistComPrecoFromBoxes,
+  ferragensFromBoxes,
+} from "../../../core/manufacturing/cutlistFromBoxes";
+import {
+  calcularPrecoTotalPecas,
+  calcularPrecoTotalProjeto,
+} from "../../../core/pricing/pricing";
 
 export default function BottomPanel() {
   const { project } = useProject();
   const microTextStyle = { fontSize: 12, lineHeight: 1.4, color: "var(--text-muted)" };
 
-  const resultados = project.resultados;
-  const totalFerragens =
-    project.acessorios?.reduce((sum, item) => sum + item.quantidade, 0) ?? 0;
-  const totalPecas = resultados?.numeroPecas ?? 0;
+  // Single Source of Truth: Resumo Financeiro 100% de project.boxes (não project.resultados/design)
+  const boxes = project.boxes ?? [];
+  const cutlist = useMemo(() => cutlistComPrecoFromBoxes(boxes), [boxes]);
+  const ferragens = useMemo(() => ferragensFromBoxes(boxes), [boxes]);
+  const totalPecas = cutlist.reduce((sum, item) => sum + item.quantidade, 0);
+  const totalFerragens = ferragens.reduce((sum, a) => sum + a.quantidade, 0);
   const totalItens = totalPecas + totalFerragens;
-  const precoTotal = project.precoTotalProjeto ?? resultados?.precoFinal ?? null;
+  const custoPecas = cutlist.length > 0 ? calcularPrecoTotalPecas(cutlist) : null;
+  const custoFerragens =
+    ferragens.length > 0 ? ferragens.reduce((s, a) => s + a.precoTotal, 0) : null;
+  const custoMateriais =
+    custoPecas != null && custoFerragens != null
+      ? custoPecas + custoFerragens
+      : custoPecas ?? custoFerragens ?? null;
+  const precoTotal =
+    custoPecas != null && custoFerragens != null
+      ? calcularPrecoTotalProjeto(custoPecas + custoFerragens)
+      : null;
   const precoPorPeca =
-    precoTotal !== null && totalPecas > 0 ? precoTotal / totalPecas : null;
-  const custoMateriais = resultados?.precoMaterial ?? null;
-  const custoPecas = project.precoTotalPecas ?? null;
-  const custoFerragens = project.precoTotalAcessorios ?? null;
+    precoTotal != null && totalPecas > 0 ? precoTotal / totalPecas : null;
   const custoMontagem =
-    precoTotal !== null && custoPecas !== null && custoFerragens !== null
+    precoTotal != null && custoPecas != null && custoFerragens != null
       ? precoTotal - (custoPecas + custoFerragens)
       : null;
-  const precoPorCaixa = project.precoTotalProjeto ?? null;
+  const precoPorCaixa =
+    precoTotal != null && boxes.length > 0 ? precoTotal / boxes.length : null;
 
   return (
     <div className="bottom-panel-root">

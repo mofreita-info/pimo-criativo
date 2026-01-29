@@ -41,50 +41,82 @@ const sectionTitleStyle = {
   marginBottom: 8,
 };
 
+const aplicacaoFerragens: Record<string, string> = {
+  dobradicas: "Portas",
+  corredicas: "Gavetas",
+  suportes_prateleira: "Prateleiras",
+};
+
 export default function CutlistPanel() {
   const { project } = useProject();
-  const selectedBox =
-    project.boxes.find((box) => box.id === project.selectedBoxId) ?? project.boxes[0];
+  // Single Source of Truth: TODAS as caixas de project.boxes (não apenas a selecionada)
+  const boxes = project.boxes ?? [];
 
-  if (!selectedBox) {
+  if (boxes.length === 0) {
     return (
       <Panel title="Cutlist Industrial">
         <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-          Gere o design para visualizar a cutlist industrial.
+          Adicione caixas no painel direito para visualizar a cutlist industrial.
         </div>
       </Panel>
     );
   }
 
-  const modeloIndustrial = gerarModeloIndustrial(selectedBox);
-  const totalAreaMm2 = modeloIndustrial.cutlist.areaTotal_mm2;
-  const totalAreaM2 = totalAreaMm2 / 1_000_000;
-  const totalPaineis = modeloIndustrial.paineis.reduce(
-    (sum, item) => sum + item.quantidade,
-    0
-  );
-  const totalPortas = modeloIndustrial.portas.length;
-  const totalGavetas = modeloIndustrial.gavetas.length;
-  const totalPecas = totalPaineis + totalPortas + totalGavetas;
-  const totalFerragens = modeloIndustrial.ferragens.reduce(
-    (sum, item) => sum + item.quantidade,
-    0
-  );
+  // Totais agregados de TODAS as caixas (project.boxes)
+  let totalAreaMm2 = 0;
+  let totalPaineisQty = 0;
+  let totalPortasQty = 0;
+  let totalGavetasQty = 0;
+  let totalFerragensQty = 0;
+  let custoTotalPaineis = 0;
+  let custoTotalPortas = 0;
+  let custoTotalGavetas = 0;
+  let custoTotalFerragens = 0;
+  const allPaineis: Array<{ key: string; boxNome: string; tipo: string; largura_mm: number; altura_mm: number; espessura_mm: number; orientacaoFibra: string; quantidade: number; custo: number }> = [];
+  const allPortas: Array<{ key: string; boxNome: string; tipo: string; largura_mm: number; altura_mm: number; espessura_mm: number; dobradicas: number; custo: number }> = [];
+  const allGavetas: Array<{ key: string; boxNome: string; largura_mm: number; altura_mm: number; profundidade_mm: number; espessura_mm: number; corrediças: number; custo: number }> = [];
+  const allFerragens: Array<{ key: string; boxNome: string; tipo: string; quantidade: number; custo: number }> = [];
 
-  const aplicacaoFerragens: Record<string, string> = {
-    dobradicas: "Portas",
-    corredicas: "Gavetas",
-    suportes_prateleira: "Prateleiras",
-  };
+  boxes.forEach((box) => {
+    const modelo = gerarModeloIndustrial(box);
+    const boxNome = box.nome || box.id;
+    totalAreaMm2 += modelo.cutlist.areaTotal_mm2;
+    modelo.paineis.forEach((p) => {
+      totalPaineisQty += p.quantidade;
+      custoTotalPaineis += p.custo;
+      allPaineis.push({ ...p, key: `${box.id}-${p.id}`, boxNome });
+    });
+    modelo.portas.forEach((p) => {
+      totalPortasQty += 1;
+      custoTotalPortas += p.custo;
+      allPortas.push({ ...p, key: `${box.id}-${p.id}`, boxNome });
+    });
+    modelo.gavetas.forEach((p) => {
+      totalGavetasQty += 1;
+      custoTotalGavetas += p.custo;
+      allGavetas.push({ ...p, key: `${box.id}-${p.id}`, boxNome });
+    });
+    modelo.ferragens.forEach((f) => {
+      totalFerragensQty += f.quantidade;
+      custoTotalFerragens += f.custo;
+      allFerragens.push({ ...f, key: `${box.id}-${f.id}`, boxNome });
+    });
+  });
+
+  const totalPecas = totalPaineisQty + totalPortasQty + totalGavetasQty;
+  const totalAreaM2 = totalAreaMm2 / 1_000_000;
+  const custoTotal =
+    custoTotalPaineis + custoTotalPortas + custoTotalGavetas + custoTotalFerragens;
 
   return (
     <Panel title="Cutlist Industrial">
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
-          <div style={sectionTitleStyle}>Painéis</div>
+          <div style={sectionTitleStyle}>Painéis (todas as caixas)</div>
           <table style={tableStyle}>
             <thead>
               <tr>
+                <th style={headerCellStyle}>Caixa</th>
                 <th style={headerCellStyle}>Tipo</th>
                 <th style={headerCellStyle}>Largura (mm)</th>
                 <th style={headerCellStyle}>Altura (mm)</th>
@@ -95,8 +127,9 @@ export default function CutlistPanel() {
               </tr>
             </thead>
             <tbody>
-              {modeloIndustrial.paineis.map((painel) => (
-                <tr key={painel.id}>
+              {allPaineis.map((painel) => (
+                <tr key={painel.key}>
+                  <td style={bodyCellStyle}>{painel.boxNome}</td>
                   <td style={bodyCellStyle}>{painel.tipo}</td>
                   <td style={bodyCellStyle}>{painel.largura_mm}</td>
                   <td style={bodyCellStyle}>{painel.altura_mm}</td>
@@ -112,12 +145,13 @@ export default function CutlistPanel() {
           </table>
         </div>
 
-        {modeloIndustrial.portas.length > 0 && (
+        {allPortas.length > 0 && (
           <div>
-            <div style={sectionTitleStyle}>Portas</div>
+            <div style={sectionTitleStyle}>Portas (todas as caixas)</div>
             <table style={tableStyle}>
               <thead>
                 <tr>
+                  <th style={headerCellStyle}>Caixa</th>
                   <th style={headerCellStyle}>Tipo</th>
                   <th style={headerCellStyle}>Largura (mm)</th>
                   <th style={headerCellStyle}>Altura (mm)</th>
@@ -127,8 +161,9 @@ export default function CutlistPanel() {
                 </tr>
               </thead>
               <tbody>
-                {modeloIndustrial.portas.map((porta) => (
-                  <tr key={porta.id}>
+                {allPortas.map((porta) => (
+                  <tr key={porta.key}>
+                    <td style={bodyCellStyle}>{porta.boxNome}</td>
                     <td style={bodyCellStyle}>{porta.tipo}</td>
                     <td style={bodyCellStyle}>{porta.largura_mm}</td>
                     <td style={bodyCellStyle}>{porta.altura_mm}</td>
@@ -142,12 +177,13 @@ export default function CutlistPanel() {
           </div>
         )}
 
-        {modeloIndustrial.gavetas.length > 0 && (
+        {allGavetas.length > 0 && (
           <div>
-            <div style={sectionTitleStyle}>Gavetas</div>
+            <div style={sectionTitleStyle}>Gavetas (todas as caixas)</div>
             <table style={tableStyle}>
               <thead>
                 <tr>
+                  <th style={headerCellStyle}>Caixa</th>
                   <th style={headerCellStyle}>Largura (mm)</th>
                   <th style={headerCellStyle}>Altura (mm)</th>
                   <th style={headerCellStyle}>Profundidade (mm)</th>
@@ -157,8 +193,9 @@ export default function CutlistPanel() {
                 </tr>
               </thead>
               <tbody>
-                {modeloIndustrial.gavetas.map((gaveta) => (
-                  <tr key={gaveta.id}>
+                {allGavetas.map((gaveta) => (
+                  <tr key={gaveta.key}>
+                    <td style={bodyCellStyle}>{gaveta.boxNome}</td>
                     <td style={bodyCellStyle}>{gaveta.largura_mm}</td>
                     <td style={bodyCellStyle}>{gaveta.altura_mm}</td>
                     <td style={bodyCellStyle}>{gaveta.profundidade_mm}</td>
@@ -173,30 +210,30 @@ export default function CutlistPanel() {
         )}
 
         <div>
-          <div style={sectionTitleStyle}>Ferragens Industriais</div>
-          {modeloIndustrial.ferragens.length === 0 ? (
+          <div style={sectionTitleStyle}>Ferragens Industriais (todas as caixas)</div>
+          {allFerragens.length === 0 ? (
             <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-              Sem ferragens para este caixote.
+              Sem ferragens.
             </div>
           ) : (
             <table style={tableStyle}>
               <thead>
                 <tr>
+                  <th style={headerCellStyle}>Caixa</th>
                   <th style={headerCellStyle}>Ferragem</th>
                   <th style={{ ...headerCellStyle, textAlign: "center" }}>Quantidade</th>
-                  <th style={headerCellStyle}>Medidas</th>
                   <th style={headerCellStyle}>Aplicação</th>
                   <th style={{ ...headerCellStyle, textAlign: "right" }}>Custo (€)</th>
                 </tr>
               </thead>
               <tbody>
-                {modeloIndustrial.ferragens.map((ferragem) => (
-                  <tr key={ferragem.id}>
+                {allFerragens.map((ferragem) => (
+                  <tr key={ferragem.key}>
+                    <td style={bodyCellStyle}>{ferragem.boxNome}</td>
                     <td style={bodyCellStyle}>{ferragem.tipo}</td>
                     <td style={{ ...bodyCellStyle, textAlign: "center" }}>
                       {ferragem.quantidade}
                     </td>
-                    <td style={bodyCellStyle}>--</td>
                     <td style={bodyCellStyle}>
                       {aplicacaoFerragens[ferragem.tipo] ?? "Geral"}
                     </td>
@@ -219,32 +256,25 @@ export default function CutlistPanel() {
             gap: 6,
           }}
         >
+          <div style={{ ...sectionTitleStyle, marginBottom: 4 }}>Totais do Projeto (project.boxes)</div>
           <div>Área total de painéis: {totalAreaM2.toFixed(3)} m²</div>
           <div>Quantidade total de peças: {totalPecas}</div>
-          <div>Quantidade total de ferragens: {totalFerragens}</div>
+          <div>Quantidade total de ferragens: {totalFerragensQty}</div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span>Custo total de painéis:</span>
-            <span style={totalValueStyle}>
-              {modeloIndustrial.custoTotalPaineis.toFixed(2)} €
-            </span>
+            <span style={totalValueStyle}>{custoTotalPaineis.toFixed(2)} €</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span>Custo total de portas:</span>
-            <span style={totalValueStyle}>
-              {modeloIndustrial.custoTotalPortas.toFixed(2)} €
-            </span>
+            <span style={totalValueStyle}>{custoTotalPortas.toFixed(2)} €</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span>Custo total de gavetas:</span>
-            <span style={totalValueStyle}>
-              {modeloIndustrial.custoTotalGavetas.toFixed(2)} €
-            </span>
+            <span style={totalValueStyle}>{custoTotalGavetas.toFixed(2)} €</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span>Custo total de ferragens:</span>
-            <span style={totalValueStyle}>
-              {modeloIndustrial.custoTotalFerragens.toFixed(2)} €
-            </span>
+            <span style={totalValueStyle}>{custoTotalFerragens.toFixed(2)} €</span>
           </div>
           <div
             style={{
@@ -253,8 +283,8 @@ export default function CutlistPanel() {
               fontWeight: 700,
             }}
           >
-            <span>Custo total do módulo:</span>
-            <span style={totalValueStyle}>{modeloIndustrial.custoTotal.toFixed(2)} €</span>
+            <span>Custo total do projeto:</span>
+            <span style={totalValueStyle}>{custoTotal.toFixed(2)} €</span>
           </div>
         </div>
       </div>
