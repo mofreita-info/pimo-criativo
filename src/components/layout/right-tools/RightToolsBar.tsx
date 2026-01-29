@@ -41,7 +41,8 @@ const tools: RightToolsItem[] = [
 export default function RightToolsBar() {
   const { actions, viewerSync, project } = useProject();
   // Single Source of Truth: Resultados Atuais derivados de project.boxes (não project.resultados/acessorios)
-  const boxes = project.boxes ?? [];
+  // boxes em useMemo para referência estável e evitar reexecução dos useMemo abaixo a cada render
+  const boxes = useMemo(() => project.boxes ?? [], [project.boxes]);
   const cutlistFromBoxes = useMemo(
     () => cutlistComPrecoFromBoxes(boxes),
     [boxes]

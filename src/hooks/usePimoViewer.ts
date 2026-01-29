@@ -28,9 +28,12 @@ export const usePimoViewer = (
 ): PimoViewerAPI => {
   const viewerRef = useRef<Viewer | null>(null);
   const optionsRef = useRef(options);
-  optionsRef.current = options;
   const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
   const onBoxSelectedRef = useRef<((id: string | null) => void) | null>(null);
+
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   useEffect(() => {
     const container = containerRef.current;

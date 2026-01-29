@@ -16,7 +16,8 @@ export default function BottomPanel() {
   const microTextStyle = { fontSize: 12, lineHeight: 1.4, color: "var(--text-muted)" };
 
   // Single Source of Truth: Resumo Financeiro 100% de project.boxes (não project.resultados/design)
-  const boxes = project.boxes ?? [];
+  // boxes em useMemo para referência estável e evitar reexecução dos useMemo abaixo a cada render
+  const boxes = useMemo(() => project.boxes ?? [], [project.boxes]);
   const cutlist = useMemo(() => cutlistComPrecoFromBoxes(boxes), [boxes]);
   const ferragens = useMemo(() => ferragensFromBoxes(boxes), [boxes]);
   const totalPecas = cutlist.reduce((sum, item) => sum + item.quantidade, 0);

@@ -21,8 +21,11 @@ export const useCalculadoraSync = (
 ) => {
   const boxesRef = useRef<BoxModule[]>(boxes);
   const viewerApiRef = useRef(viewerApi);
-  viewerApiRef.current = viewerApi;
   const stateRef = useRef<Map<string, BoxState>>(new Map());
+
+  useEffect(() => {
+    viewerApiRef.current = viewerApi;
+  }, [viewerApi]);
 
   useEffect(() => {
     boxesRef.current = boxes;
