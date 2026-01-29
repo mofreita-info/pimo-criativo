@@ -29,7 +29,11 @@ export const PimoViewerProvider = ({ children }: { children: React.ReactNode }) 
   const [viewerApi, setViewerApi] = useState<PimoViewerApi | null>(null);
 
   const registerViewerApi = useCallback((api: PimoViewerApi | null) => {
-    setViewerApi(api);
+    setViewerApi((prev) => {
+      if (api === null) return null;
+      if (prev !== null) return prev;
+      return api;
+    });
   }, []);
 
   const value = useMemo(() => ({ viewerApi, registerViewerApi }), [viewerApi, registerViewerApi]);

@@ -6,6 +6,13 @@ type ThreeViewerProps = {
   height?: number | string;
   backgroundColor?: string;
   viewerOptions?: Omit<ViewerOptions, "background">;
+  modelUrl?: string;
+  cubeCount?: number;
+  cubeSize?: number;
+  animationEnabled?: boolean;
+  materialId?: string;
+  showFloor?: boolean;
+  colorize?: boolean;
 };
 
 export default function ThreeViewer({

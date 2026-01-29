@@ -43,6 +43,7 @@ export class RendererManager {
 
   dispose() {
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
     const canvas = this.renderer.domElement;
     if (canvas.parentElement) {
       canvas.parentElement.removeChild(canvas);

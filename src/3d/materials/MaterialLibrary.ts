@@ -52,7 +52,12 @@ export const defaultMaterialSet: MaterialSet = {
       normalMap: "/textures/wood/normal.svg",
       roughnessMap: "/textures/wood/roughness.svg",
     },
-    options: { color: "#d9b68c", repeat: { x: 2, y: 2 } },
+    options: {
+      color: "#c8b79a",
+      repeat: { x: 2, y: 2 },
+      roughness: 0.7,
+      metalness: 0,
+    },
   },
 };
 

@@ -21,6 +21,7 @@ export default function Workspace({
   const viewerApi = usePimoViewer(containerRef, {
     background: viewerBackground,
     ...viewerOptions,
+    skipInitialBox: true,
   });
   const { registerViewerApi } = usePimoViewerContext();
 
@@ -41,7 +42,7 @@ export default function Workspace({
 
   useEffect(() => {
     if (project.selectedWorkspaceBoxId) {
-      viewerApi.selectBox?.(project.selectedWorkspaceBoxId);
+      viewerApi.selectBox(project.selectedWorkspaceBoxId);
     }
   }, [project.selectedWorkspaceBoxId, viewerApi]);
 

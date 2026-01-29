@@ -16,7 +16,7 @@ import type { ControlsOptions } from "./Controls";
 import { createWoodMaterial } from "../materials/WoodMaterial";
 import { defaultMaterialSet, mergeMaterialSet } from "../materials/MaterialLibrary";
 import type { MaterialPreset, MaterialSet } from "../materials/MaterialLibrary";
-import { buildBox, updateBoxGeometry } from "../objects/BoxBuilder";
+import { updateBoxGeometry, updateBoxGroup, buildBoxLegacy } from "../objects/BoxBuilder";
 import type { BoxOptions } from "../objects/BoxBuilder";
 import type { EnvironmentOptions } from "./Environment";
 
@@ -30,13 +30,15 @@ export type ViewerOptions = {
   controls?: ControlsOptions;
   enableControls?: boolean;
   box?: BoxOptions;
+  /** Se true, não cria o box inicial "main"; módulos só aparecem ao gerar design ou carregar modelo. */
+  skipInitialBox?: boolean;
 };
 
 export class Viewer {
+  private container: HTMLElement;
   private sceneManager: SceneManager;
   private cameraManager: CameraManager;
   private rendererManager: RendererManager;
-  private lights: Lights;
   private controls: Controls | null;
   private resizeObserver: ResizeObserver | null = null;
   private rafId: number | null = null;
@@ -45,7 +47,7 @@ export class Viewer {
   private boxes = new Map<
     string,
     {
-      mesh: THREE.Mesh;
+      mesh: THREE.Object3D;
       width: number;
       height: number;
       depth: number;
@@ -72,7 +74,8 @@ export class Viewer {
   private selectedBoxId: string | null = null;
   private onBoxSelected: ((id: string | null) => void) | null = null;
 
-  constructor(private container: HTMLElement, private options: ViewerOptions = {}) {
+  constructor(container: HTMLElement, options: ViewerOptions = {}) {
+    this.container = container;
     const background = options.background ?? options.scene?.background;
     this.sceneManager = new SceneManager({
       background,
@@ -83,10 +86,12 @@ export class Viewer {
       ...options.renderer,
       clearColor: background,
     });
-    this.lights = new Lights(this.sceneManager.scene, options.lights);
+    new Lights(this.sceneManager.scene, options.lights);
 
     this.materialSet = mergeMaterialSet(defaultMaterialSet);
-    this.addBox(this.mainBoxId, { ...options.box, materialName: "mdf" });
+    if (!options.skipInitialBox) {
+      this.addBox(this.mainBoxId, { ...options.box, materialName: "mdf" });
+    }
 
     this.controls = options.enableControls === false
       ? null
@@ -128,7 +133,18 @@ export class Viewer {
     if (!entry) return;
     const nextMaterial = this.loadMaterial(materialName);
     if (!nextMaterial) return;
-    entry.mesh.material = nextMaterial.material;
+    
+    // Atualizar material de todos os painéis do caixote
+    if (entry.mesh instanceof THREE.Group) {
+      entry.mesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.material = nextMaterial.material;
+        }
+      });
+    } else if (entry.mesh instanceof THREE.Mesh) {
+      entry.mesh.material = nextMaterial.material;
+    }
+    
     if (this.selectedBoxId === id) {
       entry.highlight = null;
       this.applyHighlight(entry);
@@ -165,12 +181,17 @@ export class Viewer {
 
   addBox(id: string, options: BoxOptions = {}): boolean {
     if (this.boxes.has(id)) return false;
-    const materialName = options.materialName ?? this.defaultMaterialName;
+    const opts = options ?? {};
+    const materialName = opts.materialName ?? this.defaultMaterialName;
     const material = this.loadMaterial(materialName);
-    const box = buildBox({ ...options, material: material?.material });
-    const { width, height, depth } = this.getBoxDimensions(options);
-    const index = options.index ?? this.getNextBoxIndex();
-    const position = options.position ?? { x: 0, y: height / 2, z: 0 };
+    const boxOptions: BoxOptions = { ...opts };
+    if (material?.material != null) {
+      boxOptions.material = material.material;
+    }
+    const box = buildBoxLegacy(boxOptions);
+    const { width, height, depth } = this.getBoxDimensions(opts);
+    const index = opts.index ?? this.getNextBoxIndex();
+    const position = opts.position ?? { x: 0, y: height / 2, z: 0 };
     box.position.set(position.x, position.y, position.z);
     box.name = id;
     this.sceneManager.add(box);
@@ -188,26 +209,27 @@ export class Viewer {
     return true;
   }
 
-  updateBox(id: string, options: Partial<BoxOptions>): boolean {
+  updateBox(id: string, options: Partial<BoxOptions> = {}): boolean {
     const entry = this.boxes.get(id);
     if (!entry) return false;
+    const opts = options ?? {};
     if (
-      (options.size !== undefined && (!Number.isFinite(options.size) || options.size <= 0)) ||
-      (options.width !== undefined && (!Number.isFinite(options.width) || options.width <= 0)) ||
-      (options.height !== undefined && (!Number.isFinite(options.height) || options.height <= 0)) ||
-      (options.depth !== undefined && (!Number.isFinite(options.depth) || options.depth <= 0))
+      (opts.size !== undefined && (!Number.isFinite(opts.size) || opts.size <= 0)) ||
+      (opts.width !== undefined && (!Number.isFinite(opts.width) || opts.width <= 0)) ||
+      (opts.height !== undefined && (!Number.isFinite(opts.height) || opts.height <= 0)) ||
+      (opts.depth !== undefined && (!Number.isFinite(opts.depth) || opts.depth <= 0))
     ) {
       return false;
     }
     if (
-      options.position &&
-      (!Number.isFinite(options.position.x) ||
-        !Number.isFinite(options.position.y) ||
-        !Number.isFinite(options.position.z))
+      opts.position &&
+      (!Number.isFinite(opts.position.x) ||
+        !Number.isFinite(opts.position.y) ||
+        !Number.isFinite(opts.position.z))
     ) {
       return false;
     }
-    if (options.index !== undefined && (!Number.isFinite(options.index) || options.index < 0)) {
+    if (opts.index !== undefined && (!Number.isFinite(opts.index) || opts.index < 0)) {
       return false;
     }
     let width = entry.width;
@@ -217,27 +239,30 @@ export class Viewer {
     let heightChanged = false;
     let indexChanged = false;
     if (
-      options.width !== undefined ||
-      options.height !== undefined ||
-      options.depth !== undefined ||
-      options.size !== undefined
+      opts.width !== undefined ||
+      opts.height !== undefined ||
+      opts.depth !== undefined ||
+      opts.size !== undefined
     ) {
-      const updated = updateBoxGeometry(entry.mesh, options);
+      const updated =
+        entry.mesh instanceof THREE.Group
+          ? updateBoxGroup(entry.mesh, opts)
+          : updateBoxGeometry(entry.mesh as THREE.Mesh, opts);
       width = updated.width;
       height = updated.height;
       depth = updated.depth;
       widthChanged = width !== entry.width;
       heightChanged = height !== entry.height;
     }
-    if (options.index !== undefined && options.index !== entry.index) {
-      entry.index = options.index;
+    if (opts.index !== undefined && opts.index !== entry.index) {
+      entry.index = opts.index;
       indexChanged = true;
     }
-    if (options.materialName) {
-      this.updateBoxMaterial(id, options.materialName);
+    if (opts.materialName) {
+      this.updateBoxMaterial(id, opts.materialName);
     }
-    if (options.position) {
-      entry.mesh.position.set(options.position.x, options.position.y, options.position.z);
+    if (opts.position) {
+      entry.mesh.position.set(opts.position.x, opts.position.y, opts.position.z);
     } else {
       entry.mesh.position.y = height / 2;
     }
@@ -271,12 +296,36 @@ export class Viewer {
     }
     this.clearModelsFromBox(id);
     this.sceneManager.root.remove(entry.mesh);
-    entry.mesh.geometry.dispose();
-    if (Array.isArray(entry.mesh.material)) {
-      entry.mesh.material.forEach((material) => material.dispose());
-    } else {
-      entry.mesh.material.dispose();
+    
+    // Dispose corretamente para grupos e meshes
+    if (entry.mesh instanceof THREE.Group) {
+      entry.mesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          if (child.geometry) {
+            child.geometry.dispose();
+          }
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach((material) => material.dispose());
+            } else {
+              child.material.dispose();
+            }
+          }
+        }
+      });
+    } else if (entry.mesh instanceof THREE.Mesh) {
+      if (entry.mesh.geometry) {
+        entry.mesh.geometry.dispose();
+      }
+      if (entry.mesh.material) {
+        if (Array.isArray(entry.mesh.material)) {
+          entry.mesh.material.forEach((material) => material.dispose());
+        } else {
+          entry.mesh.material.dispose();
+        }
+      }
     }
+    
     if (entry.material) {
       entry.material.textures.forEach((texture) => texture.dispose());
     }
@@ -363,16 +412,6 @@ export class Viewer {
       entry.mesh.updateMatrixWorld();
       cursorX += entry.width + this.boxGap;
     });
-  }
-
-  private getBoxHeight(options?: BoxOptions) {
-    if (!options) return 1;
-    if (options.height !== undefined) return Math.max(0.001, options.height);
-    if (options.size !== undefined) return Math.max(0.001, options.size);
-    if (options.width !== undefined || options.depth !== undefined) {
-      return Math.max(0.001, options.width ?? options.depth ?? 1);
-    }
-    return 1;
   }
 
   private getBoxDimensions(options?: BoxOptions) {
@@ -491,39 +530,81 @@ export class Viewer {
   }
 
   private applyHighlight(entry: {
-    mesh: THREE.Mesh;
+    mesh: THREE.Object3D;
     highlight: { emissive: THREE.Color; emissiveIntensity: number } | null;
   }) {
-    const material = entry.mesh.material;
-    if (Array.isArray(material)) return;
-    if (
-      material instanceof THREE.MeshStandardMaterial ||
-      material instanceof THREE.MeshPhysicalMaterial
-    ) {
-      if (!entry.highlight) {
-        entry.highlight = {
-          emissive: material.emissive.clone(),
-          emissiveIntensity: material.emissiveIntensity,
-        };
+    // Aplicar highlight a todos os painéis do caixote
+    if (entry.mesh instanceof THREE.Group) {
+      entry.mesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          const material = child.material;
+          if (Array.isArray(material)) return;
+          if (
+            material instanceof THREE.MeshStandardMaterial ||
+            material instanceof THREE.MeshPhysicalMaterial
+          ) {
+            if (!entry.highlight) {
+              entry.highlight = {
+                emissive: material.emissive.clone(),
+                emissiveIntensity: material.emissiveIntensity,
+              };
+            }
+            material.emissive = new THREE.Color("#38bdf8");
+            material.emissiveIntensity = 0.6;
+          }
+        }
+      });
+    } else if (entry.mesh instanceof THREE.Mesh) {
+      const material = entry.mesh.material;
+      if (Array.isArray(material)) return;
+      if (
+        material instanceof THREE.MeshStandardMaterial ||
+        material instanceof THREE.MeshPhysicalMaterial
+      ) {
+        if (!entry.highlight) {
+          entry.highlight = {
+            emissive: material.emissive.clone(),
+            emissiveIntensity: material.emissiveIntensity,
+          };
+        }
+        material.emissive = new THREE.Color("#38bdf8");
+        material.emissiveIntensity = 0.6;
       }
-      material.emissive = new THREE.Color("#38bdf8");
-      material.emissiveIntensity = 0.6;
     }
   }
 
   private removeHighlight(entry: {
-    mesh: THREE.Mesh;
+    mesh: THREE.Object3D;
     highlight: { emissive: THREE.Color; emissiveIntensity: number } | null;
   }) {
-    const material = entry.mesh.material;
-    if (Array.isArray(material)) return;
-    if (
-      material instanceof THREE.MeshStandardMaterial ||
-      material instanceof THREE.MeshPhysicalMaterial
-    ) {
-      if (entry.highlight) {
-        material.emissive.copy(entry.highlight.emissive);
-        material.emissiveIntensity = entry.highlight.emissiveIntensity;
+    // Remover highlight de todos os painéis do caixote
+    if (entry.mesh instanceof THREE.Group) {
+      entry.mesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          const material = child.material;
+          if (Array.isArray(material)) return;
+          if (
+            material instanceof THREE.MeshStandardMaterial ||
+            material instanceof THREE.MeshPhysicalMaterial
+          ) {
+            if (entry.highlight) {
+              material.emissive.copy(entry.highlight.emissive);
+              material.emissiveIntensity = entry.highlight.emissiveIntensity;
+            }
+          }
+        }
+      });
+    } else if (entry.mesh instanceof THREE.Mesh) {
+      const material = entry.mesh.material;
+      if (Array.isArray(material)) return;
+      if (
+        material instanceof THREE.MeshStandardMaterial ||
+        material instanceof THREE.MeshPhysicalMaterial
+      ) {
+        if (entry.highlight) {
+          material.emissive.copy(entry.highlight.emissive);
+          material.emissiveIntensity = entry.highlight.emissiveIntensity;
+        }
       }
     }
     entry.highlight = null;
@@ -569,7 +650,10 @@ export class Viewer {
       this.envMap.dispose();
     }
     this.pmremGenerator?.dispose();
+    
+    // Limpar todos os caixotes corretamente
     this.clearBoxes();
+    
     this.sceneManager.dispose();
     this.rendererManager.dispose();
   }

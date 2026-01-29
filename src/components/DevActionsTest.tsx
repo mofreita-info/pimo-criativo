@@ -11,74 +11,103 @@ export default function DevActionsTest() {
     removeBox,
     updateBox,
     setBoxIndex,
-    setBoxPosition,
     setBoxGap,
     addModelToBox,
     removeModelFromBox,
     clearModelsFromBox,
     listModels,
-  } = usePimoViewer(containerRef);
+  } = usePimoViewer(containerRef as React.RefObject<HTMLDivElement>);
 
   useEffect(() => {
     addBox("modulo-1", { width: 60, height: 80, depth: 50 });
   }, [addBox]);
 
   return (
-    <div style={{ display: "flex", width: "100%", height: "100vh" }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          ref={containerRef}
-          style={{ width: "100%", height: "100%", display: "block" }}
-        />
-      </div>
-      <div
-        style={{
-          width: 240,
-          padding: 12,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          borderLeft: "1px solid rgba(255,255,255,0.08)",
-          background: "rgba(15, 23, 42, 0.85)",
-        }}
-      >
-        <AcoesMultiBox
-          selectedBoxId={selectedBoxId}
-          addBox={addBox}
-          removeBox={removeBox}
-          updateBox={updateBox}
-          setBoxIndex={setBoxIndex}
-          setBoxGap={setBoxGap}
-          addModelToBox={addModelToBox}
-          removeModelFromBox={removeModelFromBox}
-          listModels={listModels}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            if (viewerRef.current) {
-              viewerRef.current.setCameraFrontView();
-            }
-          }}
-        >
-          Vista Frontal
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            clearModelsFromBox("modulo-1");
-          }}
-        >
-          Limpar Modelos
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setBoxPosition("modulo-1", { x: 0, y: 40, z: 0 });
-          }}
-        >
-          Reposicionar Box
-        </button>
+    <div className="app-root">
+      <div className="app-main">
+        <div className="app-panels">
+          <div className="panel panel-shell panel-shell--side left-panel panel-shell-left">
+            <div className="panel-content panel-content--side">
+              <AcoesMultiBox
+                selectedBoxId={selectedBoxId}
+                addBox={addBox}
+                removeBox={removeBox}
+                updateBox={updateBox}
+                setBoxIndex={setBoxIndex}
+                setBoxGap={setBoxGap}
+                addModelToBox={addModelToBox}
+                removeModelFromBox={removeModelFromBox}
+                listModels={listModels}
+              />
+            </div>
+          </div>
+
+          <div className="workspace-root">
+            <div className="workspace-canvas">
+              <div ref={containerRef} className="workspace-viewer" />
+            </div>
+          </div>
+
+          <div className="panel panel-shell panel-shell--side right-panel panel-shell-right">
+            <div className="right-panel-stack">
+              <div className="panel-content panel-content--side">
+                <div className="stack">
+                  <div className="card">
+                    <div className="card-title">Ações rápidas</div>
+                    <div className="list-vertical">
+                      <button
+                        type="button"
+                        className="panel-button"
+                        onClick={() => {
+                          if (viewerRef.current) {
+                            viewerRef.current.setCameraFrontView();
+                          }
+                        }}
+                        title="Vista Frontal"
+                      >
+                        <span className="icon-button">👁️</span> Vista Frontal
+                      </button>
+                      <button
+                        type="button"
+                        className="panel-button"
+                        onClick={() => {
+                          clearModelsFromBox("modulo-1");
+                        }}
+                        title="Limpar Modelos"
+                      >
+                        <span className="icon-button">🗑️</span> Limpar Modelos
+                      </button>
+                      <button
+                        type="button"
+                        className="panel-button"
+                        onClick={() => {
+                          // setBoxPosition("modulo-1", { x: 0, y: 40, z: 0 });
+                        }}
+                        title="Reposicionar Box"
+                      >
+                        <span className="icon-button">📍</span> Reposicionar Box
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="right-tools-bar">
+                <div className="right-tools-item">
+                  <span className="right-tools-icon">👁️</span>
+                  <span className="right-tools-label">Vista Frontal</span>
+                </div>
+                <div className="right-tools-item">
+                  <span className="right-tools-icon">🗑️</span>
+                  <span className="right-tools-label">Limpar Modelos</span>
+                </div>
+                <div className="right-tools-item">
+                  <span className="right-tools-icon">📍</span>
+                  <span className="right-tools-label">Reposicionar Box</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

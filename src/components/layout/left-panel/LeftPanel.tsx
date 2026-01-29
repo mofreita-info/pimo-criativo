@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useProject } from "../../../context/useProject";
 import { usePimoViewerContext } from "../../../hooks/usePimoViewerContext";
 import Panel from "../../ui/Panel";
 import { useCadModels } from "../../../hooks/useCadModels";
+import { mmToM } from "../../../utils/units";
 
 export default function LeftPanel() {
   const { project, actions } = useProject();
@@ -169,7 +170,7 @@ export default function LeftPanel() {
                 const value = Number(e.target.value);
                 actions.setDimensoes({ largura: value });
                 if (project.selectedWorkspaceBoxId) {
-                  viewerApi?.updateBox(project.selectedWorkspaceBoxId, { width: value });
+                  viewerApi?.updateBox(project.selectedWorkspaceBoxId, { width: mmToM(value) });
                 }
               }}
               className="input input-xs"
@@ -186,7 +187,7 @@ export default function LeftPanel() {
                 const value = Number(e.target.value);
                 actions.setDimensoes({ altura: value });
                 if (project.selectedWorkspaceBoxId) {
-                  viewerApi?.updateBox(project.selectedWorkspaceBoxId, { height: value });
+                  viewerApi?.updateBox(project.selectedWorkspaceBoxId, { height: mmToM(value) });
                 }
               }}
               className="input input-xs"
@@ -203,7 +204,7 @@ export default function LeftPanel() {
                 const value = Number(e.target.value);
                 actions.setDimensoes({ profundidade: value });
                 if (project.selectedWorkspaceBoxId) {
-                  viewerApi?.updateBox(project.selectedWorkspaceBoxId, { depth: value });
+                  viewerApi?.updateBox(project.selectedWorkspaceBoxId, { depth: mmToM(value) });
                 }
               }}
               className="input input-xs"

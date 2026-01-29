@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { BoxModule } from "../core/types";
 import type { BoxOptions } from "../3d/objects/BoxBuilder";
+import { mmToM } from "../utils/units";
 
 type ViewerApi = {
   addBox: (id: string, options?: BoxOptions) => boolean;
@@ -34,12 +35,15 @@ export const useCalculadoraSync = (
       currentIds.add(box.id);
       nextState.set(box.id, { index });
 
-      const width = Number.isFinite(box.dimensoes?.largura) ? box.dimensoes.largura : undefined;
-      const height = Number.isFinite(box.dimensoes?.altura) ? box.dimensoes.altura : undefined;
-      const depth = Number.isFinite(box.dimensoes?.profundidade)
+      const widthMm = Number.isFinite(box.dimensoes?.largura) ? box.dimensoes.largura : undefined;
+      const heightMm = Number.isFinite(box.dimensoes?.altura) ? box.dimensoes.altura : undefined;
+      const depthMm = Number.isFinite(box.dimensoes?.profundidade)
         ? box.dimensoes.profundidade
         : undefined;
-      const resolvedMaterialName = box.material ?? materialName;
+      const width = widthMm !== undefined ? mmToM(widthMm) : undefined;
+      const height = heightMm !== undefined ? mmToM(heightMm) : undefined;
+      const depth = depthMm !== undefined ? mmToM(depthMm) : undefined;
+      const resolvedMaterialName = box.material ?? materialName ?? "mdf";
 
       if (!stateRef.current.has(box.id)) {
         viewerApi.addBox(box.id, { width, height, depth, materialName: resolvedMaterialName, index });

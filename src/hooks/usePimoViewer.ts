@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import type { RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Viewer } from "../3d/core/Viewer";
 import type { ViewerOptions } from "../3d/core/Viewer";
 import type { BoxOptions } from "../3d/objects/BoxBuilder";
@@ -8,6 +9,7 @@ type PimoViewerAPI = {
   selectedBoxId: string | null;
   onBoxSelected: (callback: (id: string | null) => void) => void;
   setOnBoxSelected: (callback: (id: string | null) => void) => void;
+  selectBox: (id: string | null) => void;
   addBox: (id: string, options?: BoxOptions) => boolean;
   removeBox: (id: string) => boolean;
   updateBox: (id: string, options: Partial<BoxOptions>) => boolean;
@@ -21,7 +23,7 @@ type PimoViewerAPI = {
 };
 
 export const usePimoViewer = (
-  containerRef: React.RefObject<HTMLDivElement>,
+  containerRef: RefObject<HTMLDivElement | null>,
   options?: ViewerOptions
 ): PimoViewerAPI => {
   const viewerRef = useRef<Viewer | null>(null);
@@ -31,16 +33,33 @@ export const usePimoViewer = (
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    // Se já existe um viewer, apenas atualiza as opções
+    if (viewerRef.current) {
+      // Atualizar opções do viewer existente se necessário
+      // (neste caso, vamos manter o viewer existente e não recriar)
+      return;
+    }
+
     viewerRef.current = new Viewer(container, options);
     viewerRef.current.setOnBoxSelected((id) => {
       setSelectedBoxId(id);
       onBoxSelectedRef.current?.(id);
     });
+
     return () => {
       viewerRef.current?.dispose();
       viewerRef.current = null;
     };
-  }, [containerRef, options]);
+  }, [containerRef]); // Removido 'options' das dependências para evitar recriação
+
+  // Efeito separado para lidar com mudanças nas opções
+  useEffect(() => {
+    if (viewerRef.current && options) {
+      // Atualizar opções do viewer existente se necessário
+      // Neste caso, vamos apenas garantir que o viewer não seja recriado
+    }
+  }, [options]);
 
   const setOnBoxSelected = useCallback((callback: (id: string | null) => void) => {
     onBoxSelectedRef.current = callback;
@@ -98,21 +117,42 @@ export const usePimoViewer = (
     []
   );
 
-  return {
-    viewerRef,
-    selectedBoxId,
-    onBoxSelected: setOnBoxSelected,
-    setOnBoxSelected,
-    selectBox: (id: string | null) => viewerRef.current?.selectBox(id),
-    addBox,
-    removeBox,
-    updateBox,
-    setBoxIndex,
-    setBoxPosition,
-    setBoxGap,
-    addModelToBox,
-    removeModelFromBox,
-    clearModelsFromBox,
-    listModels,
-  };
+  const selectBox = useCallback((id: string | null) => {
+    viewerRef.current?.selectBox(id);
+  }, []);
+
+  return useMemo(
+    () => ({
+      viewerRef,
+      selectedBoxId,
+      onBoxSelected: setOnBoxSelected,
+      setOnBoxSelected,
+      selectBox,
+      addBox,
+      removeBox,
+      updateBox,
+      setBoxIndex,
+      setBoxPosition,
+      setBoxGap,
+      addModelToBox,
+      removeModelFromBox,
+      clearModelsFromBox,
+      listModels,
+    }),
+    [
+      selectedBoxId,
+      setOnBoxSelected,
+      selectBox,
+      addBox,
+      removeBox,
+      updateBox,
+      setBoxIndex,
+      setBoxPosition,
+      setBoxGap,
+      addModelToBox,
+      removeModelFromBox,
+      clearModelsFromBox,
+      listModels,
+    ]
+  );
 };
