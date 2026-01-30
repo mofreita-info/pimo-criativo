@@ -26,4 +26,4 @@ jobs:
           port: 65002
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "dist/*"
-          target: "/public_html/"
+          target: "/home/bf5ed0663d1090fb/files/public_html/"
