@@ -108,15 +108,13 @@ jobs:
           git config user.name "Khaled Arabi"
           git config user.email "hotlet.pt@gmail.com"
 
-      - name: FTP Deploy with Retry
+      - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           local-dir: dist
           server-dir: /
           timeout: 60000
-          retries: 3
-          retry-delay: 15000
