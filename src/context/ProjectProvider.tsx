@@ -67,7 +67,7 @@ const reviveState = (snapshot: unknown): ProjectState | null => {
   const workspaceBoxes = Array.isArray(workspaceBoxesRaw)
     ? workspaceBoxesRaw.map((box: WorkspaceBox & { modelId?: string | null }) => {
         const models = box.models ?? (box.modelId != null ? [{ id: `${box.id}-model-1`, modelId: box.modelId }] : []);
-        const { modelId: _m, ...rest } = box;
+        const { modelId: _modelId, ...rest } = box;
         return { ...rest, models };
       })
     : defaultState.workspaceBoxes;
@@ -340,7 +340,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         const nextSelected = filtered[0];
         const nextPrev = { ...prev, workspaceBoxes: filtered };
         const boxes = buildBoxesFromWorkspace(nextPrev);
-        const { [boxId]: _, ...extractedRest } = prev.extractedPartsByBoxId ?? {};
+        const extractedRest = Object.fromEntries(
+          Object.entries(prev.extractedPartsByBoxId ?? {}).filter(([k]) => k !== boxId)
+        );
         const removed = prev.workspaceBoxes.find((b) => b.id === boxId);
         return recomputeState(
           prev,
@@ -452,7 +454,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         );
         const extractedByBox = { ...prev.extractedPartsByBoxId };
         if (extractedByBox[caixaId]) {
-          const { [modelInstanceId]: _, ...rest } = extractedByBox[caixaId];
+          const rest = Object.fromEntries(
+            Object.entries(extractedByBox[caixaId]).filter(([k]) => k !== modelInstanceId)
+          );
           if (Object.keys(rest).length > 0) extractedByBox[caixaId] = rest;
           else delete extractedByBox[caixaId];
         }

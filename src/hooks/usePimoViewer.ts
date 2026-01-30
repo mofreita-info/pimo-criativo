@@ -48,7 +48,6 @@ export const usePimoViewer = (
   useEffect(() => {
     const container = containerRef.current;
     if (!container) {
-      setViewerReady(false);
       return;
     }
 
