@@ -8,27 +8,27 @@ type PimoViewerAPI = {
   viewerRef: React.MutableRefObject<Viewer | null>;
   viewerReady: boolean;
   selectedBoxId: string | null;
-  onBoxSelected: (callback: (id: string | null) => void) => void;
-  setOnBoxSelected: (callback: (id: string | null) => void) => void;
-  selectBox: (id: string | null) => void;
-  addBox: (id: string, options?: BoxOptions) => boolean;
-  removeBox: (id: string) => boolean;
-  updateBox: (id: string, options: Partial<BoxOptions>) => boolean;
-  setBoxIndex: (id: string, index: number) => boolean;
-  setBoxPosition: (id: string, position: { x: number; y: number; z: number }) => boolean;
-  setBoxGap: (gap: number) => void;
-  addModelToBox: (boxId: string, modelPath: string, modelId?: string) => boolean;
-  removeModelFromBox: (boxId: string, modelId: string) => boolean;
-  clearModelsFromBox: (boxId: string) => void;
-  listModels: (boxId: string) => Array<{ id: string; path: string }> | null;
-  getBoxDimensions: (boxId: string) => { width: number; height: number; depth: number } | null;
-  getModelPosition: (boxId: string, modelId: string) => { x: number; y: number; z: number } | null;
-  getModelBoundingBoxSize: (boxId: string, modelId: string) => { width: number; height: number; depth: number } | null;
-  setModelPosition: (boxId: string, modelId: string, position: { x: number; y: number; z: number }) => boolean;
-  setOnModelLoaded: (callback: ((boxId: string, modelId: string, object: unknown) => void) | null) => void;
-  setOnBoxTransform: (callback: ((boxId: string, position: { x: number; y: number; z: number }, rotationY: number) => void) | null) => void;
-  setTransformMode: (mode: "translate" | "rotate" | null) => void;
-  highlightBox: (id: string | null) => void;
+  onBoxSelected: (_callback: (_id: string | null) => void) => void;
+  setOnBoxSelected: (_callback: (_id: string | null) => void) => void;
+  selectBox: (_id: string | null) => void;
+  addBox: (_id: string, _options?: BoxOptions) => boolean;
+  removeBox: (_id: string) => boolean;
+  updateBox: (_id: string, _options: Partial<BoxOptions>) => boolean;
+  setBoxIndex: (_id: string, _index: number) => boolean;
+  setBoxPosition: (_id: string, _position: { x: number; y: number; z: number }) => boolean;
+  setBoxGap: (_gap: number) => void;
+  addModelToBox: (_boxId: string, _modelPath: string, _modelId?: string) => boolean;
+  removeModelFromBox: (_boxId: string, _modelId: string) => boolean;
+  clearModelsFromBox: (_boxId: string) => void;
+  listModels: (_boxId: string) => Array<{ id: string; path: string }> | null;
+  getBoxDimensions: (_boxId: string) => { width: number; height: number; depth: number } | null;
+  getModelPosition: (_boxId: string, _modelId: string) => { x: number; y: number; z: number } | null;
+  getModelBoundingBoxSize: (_boxId: string, _modelId: string) => { width: number; height: number; depth: number } | null;
+  setModelPosition: (_boxId: string, _modelId: string, _position: { x: number; y: number; z: number }) => boolean;
+  setOnModelLoaded: (_callback: ((_boxId: string, _modelId: string, _object: unknown) => void) | null) => void;
+  setOnBoxTransform: (_callback: ((_boxId: string, _position: { x: number; y: number; z: number }, _rotationY: number) => void) | null) => void;
+  setTransformMode: (_mode: "translate" | "rotate" | null) => void;
+  highlightBox: (_id: string | null) => void;
 };
 
 export const usePimoViewer = (
@@ -39,7 +39,7 @@ export const usePimoViewer = (
   const optionsRef = useRef(options);
   const [viewerReady, setViewerReady] = useState(false);
   const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
-  const onBoxSelectedRef = useRef<((id: string | null) => void) | null>(null);
+  const onBoxSelectedRef = useRef<((_id: string | null) => void) | null>(null);
 
   useEffect(() => {
     optionsRef.current = options;
@@ -52,7 +52,7 @@ export const usePimoViewer = (
     }
 
     if (viewerRef.current) {
-      setViewerReady(true);
+      requestAnimationFrame(() => setViewerReady(true));
       return;
     }
 
@@ -74,8 +74,8 @@ export const usePimoViewer = (
     };
   }, [containerRef]);
 
-  const setOnBoxSelected = useCallback((callback: (id: string | null) => void) => {
-    onBoxSelectedRef.current = callback;
+  const setOnBoxSelected = useCallback((_callback: (_id: string | null) => void) => {
+    onBoxSelectedRef.current = _callback;
   }, []);
 
   const addBox = useCallback(
@@ -154,15 +154,15 @@ export const usePimoViewer = (
   );
 
   const setOnModelLoaded = useCallback(
-    (callback: ((boxId: string, modelId: string, object: unknown) => void) | null) => {
-      viewerRef.current?.setOnModelLoaded(callback ?? null);
+    (_callback: ((_boxId: string, _modelId: string, _object: unknown) => void) | null) => {
+      viewerRef.current?.setOnModelLoaded(_callback ?? null);
     },
     []
   );
 
   const setOnBoxTransform = useCallback(
-    (callback: ((boxId: string, position: { x: number; y: number; z: number }, rotationY: number) => void) | null) => {
-      viewerRef.current?.setOnBoxTransform(callback ?? null);
+    (_callback: ((_boxId: string, _position: { x: number; y: number; z: number }, _rotationY: number) => void) | null) => {
+      viewerRef.current?.setOnBoxTransform(_callback ?? null);
     },
     []
   );

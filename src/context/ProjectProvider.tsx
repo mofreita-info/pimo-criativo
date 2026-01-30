@@ -157,7 +157,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProject = (
-    updater: (prev: ProjectState) => ProjectState,
+    updater: (_prev: ProjectState) => ProjectState,
     trackHistory = true
   ) => {
     setProject((prev) => {

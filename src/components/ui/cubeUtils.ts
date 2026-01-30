@@ -18,7 +18,7 @@ export type CubePreview = {
   drawers: number;
   doorType: BoxLike["portaTipo"];
   positionX: number;
-  applyZoom?: (scaleFactor: number) => void;
+  applyZoom?: (_scaleFactor: number) => void;
 };
 
 const hexToHsl = (hex: string) => {
@@ -92,7 +92,7 @@ const shiftLightness = (hex: string, percentDelta: number) => {
 export const updateCubePreview = (
   boxModule?: BoxLike,
   offsetX: number = 0,
-  onZoom?: (scaleFactor: number) => void,
+  onZoom?: (_scaleFactor: number) => void,
   colorIndex: number = 0
 ): CubePreview => {
   const largura = Number(boxModule?.dimensoes.largura ?? 1);

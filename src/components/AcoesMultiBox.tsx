@@ -5,14 +5,14 @@ type BoxDimensions = { width?: number; height?: number; depth?: number; index?: 
 
 type AcoesMultiBoxProps = {
   selectedBoxId: string | null;
-  addBox: (id: string, options?: BoxOptions) => boolean;
-  removeBox: (id: string) => boolean;
-  updateBox: (id: string, options: Partial<BoxOptions>) => boolean;
-  setBoxIndex: (id: string, index: number) => boolean;
-  setBoxGap: (gap: number) => void;
-  addModelToBox: (boxId: string, path: string) => boolean;
-  removeModelFromBox: (boxId: string, modelId: string) => boolean;
-  listModels: (boxId: string) => Array<{ id: string; path: string }> | null;
+  addBox: (_id: string, _options?: BoxOptions) => boolean;
+  removeBox: (_id: string) => boolean;
+  updateBox: (_id: string, _options: Partial<BoxOptions>) => boolean;
+  setBoxIndex: (_id: string, _index: number) => boolean;
+  setBoxGap: (_gap: number) => void;
+  addModelToBox: (_boxId: string, _path: string) => boolean;
+  removeModelFromBox: (_boxId: string, _modelId: string) => boolean;
+  listModels: (_boxId: string) => Array<{ id: string; path: string }> | null;
 };
 
 export default function AcoesMultiBox({

@@ -3,7 +3,7 @@ import type { ThemeId } from "./themes";
 
 interface ThemeContextProps {
   theme: ThemeId;
-  setTheme: (t: ThemeId) => void;
+  setTheme: (_t: ThemeId) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);

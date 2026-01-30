@@ -32,7 +32,7 @@ export default function ProjectRoadmap() {
   const updateTask = (
     phaseId: string,
     taskId: string,
-    updater: (task: PhaseTask) => PhaseTask
+    updater: (_task: PhaseTask) => PhaseTask
   ) => {
     setPhases((prev) =>
       prev.map((phase) =>

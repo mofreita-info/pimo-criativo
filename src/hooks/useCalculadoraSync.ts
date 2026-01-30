@@ -4,11 +4,11 @@ import type { BoxOptions } from "../3d/objects/BoxBuilder";
 import { mmToM } from "../utils/units";
 
 type ViewerApi = {
-  addBox: (id: string, options?: BoxOptions) => boolean;
-  removeBox: (id: string) => boolean;
-  updateBox: (id: string, options: Partial<BoxOptions>) => boolean;
-  setBoxIndex: (id: string, index: number) => boolean;
-  setBoxGap: (gap: number) => void;
+  addBox: (_id: string, _options?: BoxOptions) => boolean;
+  removeBox: (_id: string) => boolean;
+  updateBox: (_id: string, _options: Partial<BoxOptions>) => boolean;
+  setBoxIndex: (_id: string, _index: number) => boolean;
+  setBoxGap: (_gap: number) => void;
 };
 
 type BoxState = { index: number };

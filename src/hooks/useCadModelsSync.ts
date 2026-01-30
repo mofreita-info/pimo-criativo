@@ -8,9 +8,9 @@ import { getModelUrlFromStorage } from "../context/projectState";
 import type { WorkspaceBox } from "../core/types";
 
 type ViewerApi = {
-  addModelToBox: (boxId: string, modelPath: string, modelId?: string) => boolean;
-  removeModelFromBox: (boxId: string, modelId: string) => boolean;
-  listModels: (boxId: string) => Array<{ id: string; path: string }> | null;
+  addModelToBox: (_boxId: string, _modelPath: string, _modelId?: string) => boolean;
+  removeModelFromBox: (_boxId: string, _modelId: string) => boolean;
+  listModels: (_boxId: string) => Array<{ id: string; path: string }> | null;
 };
 
 export function useCadModelsSync(

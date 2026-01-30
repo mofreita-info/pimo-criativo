@@ -30,7 +30,7 @@ const toolbarItems: LeftToolbarItem[] = [
 
 type LeftToolbarProps = {
   selectedId: string;
-  onSelect: (id: string) => void;
+  onSelect: (_id: string) => void;
 };
 
 export default function LeftToolbar({ selectedId, onSelect }: LeftToolbarProps) {

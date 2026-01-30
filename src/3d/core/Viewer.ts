@@ -75,9 +75,9 @@ export class Viewer {
   private raycaster = new THREE.Raycaster();
   private pointer = new THREE.Vector2();
   private selectedBoxId: string | null = null;
-  private onBoxSelected: ((id: string | null) => void) | null = null;
-  private onModelLoaded: ((boxId: string, modelId: string, object: THREE.Object3D) => void) | null = null;
-  private onBoxTransform: ((boxId: string, position: { x: number; y: number; z: number }, rotationY: number) => void) | null = null;
+  private onBoxSelected: ((_id: string | null) => void) | null = null;
+  private onModelLoaded: ((_boxId: string, _modelId: string, _object: THREE.Object3D) => void) | null = null;
+  private onBoxTransform: ((_boxId: string, _position: { x: number; y: number; z: number }, _rotationY: number) => void) | null = null;
   private transformControls: TransformControls | null = null;
   /** Helper (Object3D) retornado por getHelper(); é o que é adicionado à cena e tem .visible. */
   private transformControlsHelper: THREE.Object3D | null = null;
@@ -432,15 +432,15 @@ export class Viewer {
     Array.from(this.boxes.keys()).forEach((id) => this.removeBox(id));
   }
 
-  setOnBoxSelected(callback: (id: string | null) => void): void {
+  setOnBoxSelected(callback: (_id: string | null) => void): void {
     this.onBoxSelected = callback;
   }
 
-  setOnModelLoaded(callback: ((boxId: string, modelId: string, object: THREE.Object3D) => void) | null): void {
+  setOnModelLoaded(callback: ((_boxId: string, _modelId: string, _object: THREE.Object3D) => void) | null): void {
     this.onModelLoaded = callback;
   }
 
-  setOnBoxTransform(callback: ((boxId: string, position: { x: number; y: number; z: number }, rotationY: number) => void) | null): void {
+  setOnBoxTransform(callback: ((_boxId: string, _position: { x: number; y: number; z: number }, _rotationY: number) => void) | null): void {
     this.onBoxTransform = callback;
   }
 

@@ -5,12 +5,12 @@ import type { MaterialCategoryConfig, ModelPart } from "./materialUtils";
 
 type MaterialContextValue = {
   state: MaterialSystemState;
-  setCategoryPreset: (category: MaterialCategory, presetId: string) => void;
+  setCategoryPreset: (_category: MaterialCategory, _presetId: string) => void;
   setCategoryOverrides: (
-    category: MaterialCategory,
-    overrides: Partial<MaterialCategoryConfig>
+    _category: MaterialCategory,
+    _overrides: Partial<MaterialCategoryConfig>
   ) => void;
-  setAssignment: (part: ModelPart, category: MaterialCategory) => void;
+  setAssignment: (_part: ModelPart, _category: MaterialCategory) => void;
 };
 
 export const MaterialContext = createContext<MaterialContextValue | null>(null);

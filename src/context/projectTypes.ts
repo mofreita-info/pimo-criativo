@@ -123,10 +123,10 @@ export type ViewerRenderResult = {
 
 export type ViewerApi = {
   saveSnapshot: () => ViewerSnapshot | null;
-  restoreSnapshot: (snapshot: ViewerSnapshot | null) => void;
-  enable2DView: (angle: Viewer2DAngle) => void;
+  restoreSnapshot: (_snapshot: ViewerSnapshot | null) => void;
+  enable2DView: (_angle: Viewer2DAngle) => void;
   disable2DView: () => void;
-  renderScene: (options: ViewerRenderOptions) => ViewerRenderResult | null;
+  renderScene: (_options: ViewerRenderOptions) => ViewerRenderResult | null;
 };
 
 export type ProjectSnapshot = {
@@ -139,72 +139,72 @@ export type ViewerSync = {
   applyStateToViewer: () => void;
   extractStateFromViewer: () => void;
   saveViewerSnapshot: () => ViewerSnapshot | null;
-  restoreViewerSnapshot: (snapshot: ViewerSnapshot | null) => void;
-  registerViewerApi: (api: ViewerApi | null) => void;
-  enable2DView: (angle: Viewer2DAngle) => void;
+  restoreViewerSnapshot: (_snapshot: ViewerSnapshot | null) => void;
+  registerViewerApi: (_api: ViewerApi | null) => void;
+  enable2DView: (_angle: Viewer2DAngle) => void;
   disable2DView: () => void;
-  renderScene: (options: ViewerRenderOptions) => ViewerRenderResult | null;
+  renderScene: (_options: ViewerRenderOptions) => ViewerRenderResult | null;
 };
 
 export interface ProjectActions {
-  setProjectName: (name: string) => void;
-  setTipoProjeto: (tipo: string) => void;
-  setMaterial: (material: Material) => void;
-  setEspessura: (espessura: number) => void;
-  setDimensoes: (dimensoes: Partial<Dimensoes>) => void;
-  setQuantidade: (quantidade: number) => void;
+  setProjectName: (_name: string) => void;
+  setTipoProjeto: (_tipo: string) => void;
+  setMaterial: (_material: Material) => void;
+  setEspessura: (_espessura: number) => void;
+  setDimensoes: (_dimensoes: Partial<Dimensoes>) => void;
+  setQuantidade: (_quantidade: number) => void;
   addBox: () => void;
   addWorkspaceBox: () => void;
   duplicateBox: () => void;
   duplicateWorkspaceBox: () => void;
   removeBox: () => void;
   removeWorkspaceBox: () => void;
-  removeWorkspaceBoxById: (boxId: string) => void;
-  selectBox: (boxId: string) => void;
+  removeWorkspaceBoxById: (_boxId: string) => void;
+  selectBox: (_boxId: string) => void;
   /** Adiciona um modelo CAD (por id do catálogo) à caixa. */
-  addModelToBox: (caixaId: string, cadModelId: string) => void;
+  addModelToBox: (_caixaId: string, _cadModelId: string) => void;
   /** Cria uma nova caixa no workspace com o modelo CAD (modelo = Box completo). */
-  addCadModelAsNewBox: (cadModelId: string) => void;
+  addCadModelAsNewBox: (_cadModelId: string) => void;
   /** Remove uma instância de modelo da caixa. */
-  removeModelFromBox: (caixaId: string, modelInstanceId: string) => void;
+  removeModelFromBox: (_caixaId: string, _modelInstanceId: string) => void;
   /** Atualiza nome, material ou categoria de uma instância de modelo na caixa. */
-  updateModelInBox: (caixaId: string, modelInstanceId: string, updates: { nome?: string; material?: string; categoria?: string }) => void;
+  updateModelInBox: (_caixaId: string, _modelInstanceId: string, _updates: { nome?: string; material?: string; categoria?: string }) => void;
   /** (Legado) Atualiza o único modelo da caixa; migra para models[]. */
-  updateCaixaModelId: (caixaId: string, modelId: string | null) => void;
-  selectModelInstance: (boxId: string, modelInstanceId: string | null) => void;
-  renameBox: (nome: string) => void;
-  setPrateleiras: (quantidade: number) => void;
-  setPortaTipo: (portaTipo: BoxModule["portaTipo"]) => void;
-  setTipoBorda: (tipoBorda: TipoBorda) => void;
-  setTipoFundo: (tipoFundo: TipoFundo) => void;
-  setExtractedPartsForBox: (boxId: string, modelInstanceId: string, parts: CutListItemComPreco[]) => void;
-  clearExtractedPartsForBox: (boxId: string, modelInstanceId?: string) => void;
-  setModelPositionInBox: (boxId: string, modelInstanceId: string, position: { x: number; y: number; z: number }) => void;
-  setLayoutWarnings: (warnings: LayoutWarnings) => void;
-  updateWorkspacePosition: (boxId: string, posicaoX_mm: number) => void;
-  updateWorkspaceBoxPosition: (boxId: string, posicaoX_mm: number) => void;
+  updateCaixaModelId: (_caixaId: string, _modelId: string | null) => void;
+  selectModelInstance: (_boxId: string, _modelInstanceId: string | null) => void;
+  renameBox: (_nome: string) => void;
+  setPrateleiras: (_quantidade: number) => void;
+  setPortaTipo: (_portaTipo: BoxModule["portaTipo"]) => void;
+  setTipoBorda: (_tipoBorda: TipoBorda) => void;
+  setTipoFundo: (_tipoFundo: TipoFundo) => void;
+  setExtractedPartsForBox: (_boxId: string, _modelInstanceId: string, _parts: CutListItemComPreco[]) => void;
+  clearExtractedPartsForBox: (_boxId: string, _modelInstanceId?: string) => void;
+  setModelPositionInBox: (_boxId: string, _modelInstanceId: string, _position: { x: number; y: number; z: number }) => void;
+  setLayoutWarnings: (_warnings: LayoutWarnings) => void;
+  updateWorkspacePosition: (_boxId: string, _posicaoX_mm: number) => void;
+  updateWorkspaceBoxPosition: (_boxId: string, _posicaoX_mm: number) => void;
   /** Atualiza posição/rotação/manual da caixa no viewer (manipulação visual; não altera cut list). */
   updateWorkspaceBoxTransform: (
-    boxId: string,
-    partial: { x_mm?: number; y_mm?: number; z_mm?: number; rotacaoY_rad?: number; manualPosition?: boolean }
+    _boxId: string,
+    _partial: { x_mm?: number; y_mm?: number; z_mm?: number; rotacaoY_rad?: number; manualPosition?: boolean }
   ) => void;
   /** Atualiza dimensões da caixa a partir do bbox do GLB (caixas CAD-only). */
-  setWorkspaceBoxDimensoes: (boxId: string, dimensoes: { largura: number; altura: number; profundidade: number }) => void;
+  setWorkspaceBoxDimensoes: (_boxId: string, _dimensoes: { largura: number; altura: number; profundidade: number }) => void;
   /** Atualiza o nome da caixa (ex.: nome do modelo CAD). */
-  setWorkspaceBoxNome: (boxId: string, nome: string) => void;
-  toggleWorkspaceRotation: (boxId: string) => void;
-  rotateWorkspaceBox: (boxId: string) => void;
+  setWorkspaceBoxNome: (_boxId: string, _nome: string) => void;
+  toggleWorkspaceRotation: (_boxId: string) => void;
+  rotateWorkspaceBox: (_boxId: string) => void;
   gerarDesign: () => void;
   exportarPDF: () => void;
-  logChangelog: (message: string) => void;
+  logChangelog: (_message: string) => void;
   undo: () => void;
   redo: () => void;
   saveProjectSnapshot: () => void;
-  loadProjectSnapshot: (id: string) => void;
+  loadProjectSnapshot: (_id: string) => void;
   listSavedProjects: () => SavedProjectInfo[];
   createNewProject: () => void;
-  renameProject: (id: string, name: string) => void;
-  deleteProject: (id: string) => void;
+  renameProject: (_id: string, _name: string) => void;
+  deleteProject: (_id: string) => void;
 }
 
 export interface ProjectContextProps {
