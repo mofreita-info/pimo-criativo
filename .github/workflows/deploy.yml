@@ -1,4 +1,4 @@
-name: Deploy via FTP
+name: Deploy via SFTP
 
 on:
   push:
@@ -18,11 +18,12 @@ jobs:
           npm install
           npm run build
 
-      - name: Upload via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: Upload via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.FTP_HOST }}
+          port: 65002
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: dist/
-          server-dir: /public_html/
+          local_path: "dist/*"
+          remote_path: "/home/u100505900/public_html/"
