@@ -1,120 +1,29 @@
-name: Deploy to Hostinger
+name: Deploy via SFTP
 
 on:
   push:
     branches:
       - main
 
-concurrency:
-  group: deploy-main
-  cancel-in-progress: true
-
-permissions:
-  contents: read
-
 jobs:
-  preview:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Cache dependencies
-        id: cache-deps
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: |
-          if [ "${{ steps.cache-deps.outputs.cache-hit }}" = "true" ]; then
-            npm install --prefer-offline
-          else
-            npm ci
-          fi
-
-      - name: Lint (syntax check)
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
-
-      - name: Verify dist folder
-        run: test -d dist
-
-      - name: Upload preview artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: preview-build
-          path: dist/
-
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: preview
-    if: github.ref == 'refs/heads/main'
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Cache dependencies
-        id: cache-deps
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: |
-          if [ "${{ steps.cache-deps.outputs.cache-hit }}" = "true" ]; then
-            npm install --prefer-offline
-          else
-            npm ci
-          fi
-
-      - name: Lint (syntax check)
-        run: npm run lint
+        uses: actions/checkout@v3
 
       - name: Build
-        run: npm run build
-
-      - name: Verify dist folder
-        run: test -d dist
-
-      # 🔥 إضافة الإيميل الجديد هنا
-      - name: Configure Git identity
         run: |
-          git config user.name "Khaled Arabi"
-          git config user.email "hotlet.pt@gmail.com"
+          npm install
+          npm run build
 
-      - name: SFTP Deploy
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      - name: Upload via SCP
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ secrets.FTP_HOST }}
+          host: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           port: 65002
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          local_path: "dist/*"
-          remote_path: "/public_html/"
-          delete_remote_files: false
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/*"
+          target: "/public_html/"
