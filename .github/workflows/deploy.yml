@@ -108,13 +108,13 @@ jobs:
           git config user.name "Khaled Arabi"
           git config user.email "hotlet.pt@gmail.com"
 
-      - name: FTP Deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: SFTP Deploy
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          local-dir: dist/
-          server-dir: /public_html/
-          timeout: 60000
+          port: 22
+          local_path: "dist/*"
+          remote_path: "/public_html/"
+          delete_remote_files: false
