@@ -6,8 +6,6 @@ import type { ViewerOptions } from "../3d/core/Viewer";
  */
 export const DEFAULT_VIEWER_OPTIONS: Omit<ViewerOptions, "background" | "skipInitialBox"> = {
   enableControls: true,
-  /** HDRI neutro e suave para reflexos coerentes com MDF (luz difusa, sem fontes diretas). Respeita base URL (produção/subpath). */
-  environmentMap: `${import.meta.env.BASE_URL}hdr/studio_neutral.hdr`,
   renderer: {
     antialias: true,
     toneMappingExposure: 1.05,

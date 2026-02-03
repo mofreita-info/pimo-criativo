@@ -4,7 +4,6 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { BokehPass } from "three/examples/jsm/postprocessing/BokehPass.js";
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import { SceneManager } from "./SceneManager";
@@ -49,8 +48,6 @@ export type ViewerOptions = {
   background?: string;
   scene?: SceneOptions;
   environment?: EnvironmentOptions;
-  /** URL do HDRI para modo realista (reflexos, luz ambiente). Se definido, carrega automaticamente. */
-  environmentMap?: string;
   camera?: CameraOptions;
   renderer?: RendererOptions;
   lights?: LightsOptions;
@@ -69,8 +66,6 @@ export class Viewer {
   private controls: Controls | null;
   private resizeObserver: ResizeObserver | null = null;
   private rafId: number | null = null;
-  private envMap: THREE.Texture | null = null;
-  private pmremGenerator: THREE.PMREMGenerator | null = null;
   private boxes = new Map<
     string,
     {
@@ -87,14 +82,6 @@ export class Viewer {
         path: string;
       }>;
       material: LoadedWoodMaterial | null;
-      detailMapsRequested?: boolean;
-      detailTextures?: {
-        normal?: THREE.Texture | null;
-        roughness?: THREE.Texture | null;
-        metalness?: THREE.Texture | null;
-        ao?: THREE.Texture | null;
-      };
-      detailMapsActive?: boolean;
     }
   >();
   private mainBoxId = "main";
@@ -146,8 +133,6 @@ export class Viewer {
   /** Compositor principal: RenderPass + bloom muito suave (modo atual). */
   private mainComposer: EffectComposer | null = null;
   private mainBloomPass: UnrealBloomPass | null = null;
-  private hdriLoaded = false;
-  private pendingHDRIUrl: string | null = null;
   private ultraPerformanceMode = false;
   private defaultPixelRatio: number;
   private ultraLightState: {
@@ -213,9 +198,6 @@ export class Viewer {
     this.roomBuilder = new RoomBuilder();
     this.sceneManager.add(this.roomBuilder.getGroup());
 
-    this.pendingHDRIUrl =
-      options.environmentMap ?? `${import.meta.env.BASE_URL}hdr/studio_neutral.hdr`;
-
     this.materialSet = mergeMaterialSet(defaultMaterialSet);
     if (!options.skipInitialBox) {
       this.addBox(this.mainBoxId, { ...options.box, materialName: "MDF Branco" });
@@ -249,9 +231,6 @@ export class Viewer {
     this.rendererManager.renderer.domElement.addEventListener("pointermove", this.handleCanvasPointerMove);
     this.rendererManager.renderer.domElement.addEventListener("pointerleave", this.handleCanvasPointerLeave);
 
-    if (this.pendingHDRIUrl) {
-      this.loadHDRI(this.pendingHDRIUrl, { setBackground: false });
-    }
     this.start();
     window.addEventListener("resize", this.updateCanvasSize);
   }
@@ -265,9 +244,6 @@ export class Viewer {
     this.turntableEnabled = mode === "showcase" && turntable;
     this.lights.setShadowMapSize(this.isMobile ? 512 : 2048);
     if (mode === "showcase") {
-      if (!this.hdriLoaded && this.pendingHDRIUrl) {
-        this.loadHDRI(this.pendingHDRIUrl, { setBackground: false });
-      }
       if (!this.composer) {
         this.initShowcaseComposer();
       }
@@ -320,9 +296,6 @@ export class Viewer {
     }
 
     this.updateCanvasSize();
-    this.boxes.forEach((entry) => {
-      this.applyDetailMapState(entry);
-    });
   }
 
   private lerpLightsToTarget(): void {
@@ -521,115 +494,6 @@ export class Viewer {
     this.mainBloomPass = null;
   }
 
-  loadHDRI(url: string, options?: { setBackground?: boolean }) {
-    if (!this.pmremGenerator) {
-      this.pmremGenerator = new THREE.PMREMGenerator(this.rendererManager.renderer);
-    }
-    const loader = new RGBELoader();
-    if (THREE.UnsignedByteType) {
-      loader.setDataType(THREE.UnsignedByteType);
-    }
-    loader.load(
-      url,
-      (texture) => {
-      if (this.isMobile && texture.image && "data" in texture.image) {
-        const image = texture.image as {
-          width: number;
-          height: number;
-          data?: Float32Array | Uint16Array | Uint8Array;
-        };
-        if (image.width && image.height && image.data) {
-          const targetWidth = Math.max(256, Math.floor(image.width / 2));
-          const targetHeight = Math.max(128, Math.floor(image.height / 2));
-          if (targetWidth < image.width && targetHeight < image.height) {
-            let targetData: Float32Array | Uint16Array | Uint8Array;
-            if (image.data instanceof Float32Array) {
-              targetData = new Float32Array(targetWidth * targetHeight * 4);
-            } else if (image.data instanceof Uint16Array) {
-              targetData = new Uint16Array(targetWidth * targetHeight * 4);
-            } else {
-              targetData = new Uint8Array(targetWidth * targetHeight * 4);
-            }
-            for (let y = 0; y < targetHeight; y++) {
-              const srcY = Math.min(
-                image.height - 1,
-                Math.floor((y / targetHeight) * image.height)
-              );
-              for (let x = 0; x < targetWidth; x++) {
-                const srcX = Math.min(
-                  image.width - 1,
-                  Math.floor((x / targetWidth) * image.width)
-                );
-                const dstIndex = (y * targetWidth + x) * 4;
-                const srcIndex = (srcY * image.width + srcX) * 4;
-                targetData[dstIndex] = image.data[srcIndex];
-                targetData[dstIndex + 1] = image.data[srcIndex + 1];
-                targetData[dstIndex + 2] = image.data[srcIndex + 2];
-                targetData[dstIndex + 3] = image.data[srcIndex + 3];
-              }
-            }
-            image.data = targetData;
-            image.width = targetWidth;
-            image.height = targetHeight;
-            texture.needsUpdate = true;
-          }
-        }
-      }
-      const envMap = this.pmremGenerator?.fromEquirectangular(texture).texture ?? null;
-      texture.dispose();
-      if (!envMap) return;
-      if (this.envMap) {
-        this.envMap.dispose();
-      }
-      this.envMap = envMap;
-      this.sceneManager.scene.environment = envMap;
-      if (options?.setBackground ?? true) {
-        this.sceneManager.scene.background = envMap;
-      }
-      this.hdriLoaded = true;
-      this.pendingHDRIUrl = null;
-      if (import.meta.env.PROD) {
-        console.log("[Viewer] HDRI carregado:", url);
-      }
-    },
-      undefined,
-      () => {
-        console.warn("[Viewer] Falha ao carregar HDRI:", url, "- usando fallback (sem envMap).");
-        this.hdriLoaded = true;
-        this.pendingHDRIUrl = null;
-        this.applyEnvMapFallback();
-      }
-    );
-  }
-
-  private applyEnvMapFallback(): void {
-    const fallbackColor = new THREE.Color("#f2f0eb");
-    this.boxes.forEach((entry) => {
-      const mat = entry.material?.material;
-      if (mat && mat instanceof THREE.MeshStandardMaterial) {
-        mat.envMapIntensity = 0;
-        if (mat.color.getHex() === 0x000000 || mat.color.getStyle().toLowerCase() === "#000000") {
-          mat.color.copy(fallbackColor);
-        }
-      }
-      if (entry.mesh instanceof THREE.Group) {
-        entry.mesh.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.envMapIntensity = 0;
-            if (child.material.color.getHex() === 0x000000) {
-              child.material.color.copy(fallbackColor);
-            }
-          }
-        });
-      } else if (entry.mesh instanceof THREE.Mesh && entry.mesh.material instanceof THREE.MeshStandardMaterial) {
-        entry.mesh.material.envMapIntensity = 0;
-        if (entry.mesh.material.color.getHex() === 0x000000) {
-          entry.mesh.material.color.copy(fallbackColor);
-        }
-      }
-    });
-  }
-
   loadMaterialSet(materialConfig?: MaterialSet) {
     this.materialSet = mergeMaterialSet(this.materialSet, materialConfig);
   }
@@ -659,13 +523,7 @@ export class Viewer {
       entry.material.textures.forEach((texture) => texture.dispose());
     }
     entry.material = nextMaterial;
-    entry.detailMapsRequested = false;
-    entry.detailTextures = undefined;
-    entry.detailMapsActive = undefined;
-    if (this.ultraPerformanceMode) {
-      this.applyDetailMapState(entry);
-    } else if (this.selectedBoxId === id) {
-      this.ensureMaterialDetailMaps(entry);
+    if (this.selectedBoxId === id) {
       this.refreshOutlineTarget();
     }
   }
@@ -749,16 +607,7 @@ export class Viewer {
       manualPosition: opts.manualPosition ?? false,
       cadModels: [],
       material,
-      detailMapsRequested: false,
-      detailTextures: undefined,
-      detailMapsActive: undefined,
     });
-    if (this.ultraPerformanceMode) {
-      const entry = this.boxes.get(id);
-      if (entry) {
-        this.applyDetailMapState(entry);
-      }
-    }
     this.reflowBoxes();
     this.updateCameraTarget();
     return true;
@@ -1357,12 +1206,6 @@ export class Viewer {
       this.onBoxSelected?.(id);
       return;
     }
-    if (this.selectedBoxId && !this.ultraPerformanceMode) {
-      const previous = this.boxes.get(this.selectedBoxId);
-      if (previous) {
-        this.releaseDetailMaps(previous);
-      }
-    }
     this.selectedBoxId = id;
     if (this.transformControls) {
       this.transformControls.detach();
@@ -1375,12 +1218,6 @@ export class Viewer {
         }
       } else {
         (this.transformControls as unknown as THREE.Object3D).visible = false;
-      }
-    }
-    if (id) {
-      const entry = this.boxes.get(id);
-      if (entry) {
-        this.ensureMaterialDetailMaps(entry);
       }
     }
     this.refreshOutlineTarget();
@@ -1413,123 +1250,10 @@ export class Viewer {
     this.refreshOutlineTarget();
   }
 
-  private releaseDetailMaps(entry: {
-    material: LoadedWoodMaterial | null;
-    detailTextures?: {
-      normal?: THREE.Texture | null;
-      roughness?: THREE.Texture | null;
-      metalness?: THREE.Texture | null;
-      ao?: THREE.Texture | null;
-    };
-    detailMapsActive?: boolean;
-  }) {
-    if (!entry.material) return;
-    const material = entry.material.material;
-    if (!entry.detailTextures && entry.material.areDetailMapsLoaded()) {
-      this.captureDetailTextures(entry);
-    }
-    material.normalMap = null;
-    material.roughnessMap = null;
-    material.metalnessMap = null;
-    material.aoMap = null;
-    material.needsUpdate = true;
-    entry.detailMapsActive = false;
-  }
-
   private loadMaterial(materialName: string) {
     const preset = getMaterialPreset(this.materialSet, materialName);
-    if (!preset || !preset.maps?.colorMap) return null;
-    const maxAnisotropy = this.rendererManager.renderer.capabilities.getMaxAnisotropy();
-    const anisotropy = Math.min(maxAnisotropy, 4);
-    const loader = new THREE.TextureLoader();
-    return createWoodMaterial(preset.maps, { ...preset.options, anisotropy }, loader);
-  }
-
-  private ensureMaterialDetailMaps(entry: {
-    material: LoadedWoodMaterial | null;
-    detailMapsRequested?: boolean;
-    detailTextures?: {
-      normal?: THREE.Texture | null;
-      roughness?: THREE.Texture | null;
-      metalness?: THREE.Texture | null;
-      ao?: THREE.Texture | null;
-    };
-    detailMapsActive?: boolean;
-  }) {
-    if (!entry.material) return;
-    if (entry.material.areDetailMapsLoaded()) {
-      this.captureDetailTextures(entry);
-      this.applyDetailMapState(entry);
-      return;
-    }
-    if (this.ultraPerformanceMode) return;
-    if (entry.detailMapsRequested) return;
-    entry.detailMapsRequested = true;
-    void entry.material
-      .loadDetailMaps()
-      .then(() => {
-        entry.detailMapsRequested = false;
-        this.captureDetailTextures(entry);
-        this.applyDetailMapState(entry);
-      })
-      .catch(() => {
-        entry.detailMapsRequested = false;
-      });
-  }
-
-  private captureDetailTextures(entry: {
-    material: LoadedWoodMaterial | null;
-    detailTextures?: {
-      normal?: THREE.Texture | null;
-      roughness?: THREE.Texture | null;
-      metalness?: THREE.Texture | null;
-      ao?: THREE.Texture | null;
-    };
-  }) {
-    if (!entry.material) return;
-    const material = entry.material.material;
-    const prev = entry.detailTextures;
-    entry.detailTextures = {
-      normal: material.normalMap ?? prev?.normal ?? null,
-      roughness: material.roughnessMap ?? prev?.roughness ?? null,
-      metalness: material.metalnessMap ?? prev?.metalness ?? null,
-      ao: material.aoMap ?? prev?.ao ?? null,
-    };
-  }
-
-  private applyDetailMapState(entry: {
-    material: LoadedWoodMaterial | null;
-    detailTextures?: {
-      normal?: THREE.Texture | null;
-      roughness?: THREE.Texture | null;
-      metalness?: THREE.Texture | null;
-      ao?: THREE.Texture | null;
-    };
-    detailMapsActive?: boolean;
-  }) {
-    if (!entry.material) return;
-    const material = entry.material.material;
-    if (!entry.detailTextures && entry.material.areDetailMapsLoaded()) {
-      this.captureDetailTextures(entry);
-    }
-    if (this.ultraPerformanceMode) {
-      if (entry.detailMapsActive !== false) {
-        material.normalMap = null;
-        material.roughnessMap = null;
-        material.metalnessMap = null;
-        material.aoMap = null;
-        material.needsUpdate = true;
-        entry.detailMapsActive = false;
-      }
-      return;
-    }
-    if (!entry.detailTextures) return;
-    material.normalMap = entry.detailTextures.normal ?? null;
-    material.roughnessMap = entry.detailTextures.roughness ?? null;
-    material.metalnessMap = entry.detailTextures.metalness ?? null;
-    material.aoMap = entry.detailTextures.ao ?? null;
-    material.needsUpdate = true;
-    entry.detailMapsActive = true;
+    if (!preset?.options) return null;
+    return createWoodMaterial({}, { ...preset.options });
   }
 
   private refreshOutlineTarget() {
@@ -1860,31 +1584,6 @@ export class Viewer {
     applyPresetCamera();
     applyShadowIntensity();
 
-    if (options.mode === "pbr") {
-      const selectedEntry = this.selectedBoxId
-        ? this.boxes.get(this.selectedBoxId) ?? null
-        : null;
-      if (
-        selectedEntry &&
-        selectedEntry.material &&
-        !selectedEntry.material.areDetailMapsLoaded() &&
-        !this.ultraPerformanceMode
-      ) {
-        selectedEntry.detailMapsRequested = true;
-        try {
-          await selectedEntry.material.loadDetailMaps();
-          selectedEntry.detailMapsRequested = false;
-          this.captureDetailTextures(selectedEntry);
-          this.applyDetailMapState(selectedEntry);
-        } catch {
-          selectedEntry.detailMapsRequested = false;
-        }
-      } else if (selectedEntry) {
-        this.captureDetailTextures(selectedEntry);
-        this.applyDetailMapState(selectedEntry);
-      }
-    }
-
     const prevPixelRatio = renderer.getPixelRatio();
     const prevRenderTarget = renderer.getRenderTarget();
     const prevClearColor = renderer.getClearColor(new THREE.Color()).clone();
@@ -2018,10 +1717,6 @@ export class Viewer {
     canvas.removeEventListener("click", this.handleCanvasClick);
     canvas.removeEventListener("pointermove", this.handleCanvasPointerMove);
     canvas.removeEventListener("pointerleave", this.handleCanvasPointerLeave);
-    if (this.envMap) {
-      this.envMap.dispose();
-    }
-    this.pmremGenerator?.dispose();
     if (this.selectionOutline) {
       this.sceneManager.scene.remove(this.selectionOutline);
       this.selectionOutline.geometry.dispose();

@@ -1,17 +1,13 @@
-import type { WoodMaterialMaps, WoodMaterialOptions } from "./WoodMaterial";
-
-/** Base URL para assets (correto em produção/subpath). */
-const BASE = import.meta.env.BASE_URL;
+import type { WoodMaterialOptions } from "./WoodMaterial";
 
 export type MaterialPreset = {
   name: string;
-  maps: WoodMaterialMaps;
   options?: WoodMaterialOptions;
 };
 
 export type MaterialSet = Record<string, MaterialPreset>;
 
-/** IDs dos materiais PBR reais (sem cores artificiais). */
+/** IDs dos materiais (cor sólida, sem texturas). */
 export const MATERIAIS_PBR_IDS = [
   "carvalho_natural",
   "carvalho_escuro",
@@ -23,7 +19,6 @@ export const MATERIAIS_PBR_IDS = [
 
 export type MaterialPbrId = (typeof MATERIAIS_PBR_IDS)[number];
 
-/** Nomes de exibição para os materiais PBR. */
 export const MATERIAIS_PBR_LABELS: Record<MaterialPbrId, string> = {
   carvalho_natural: "Carvalho Natural",
   carvalho_escuro: "Carvalho Escuro",
@@ -33,7 +28,6 @@ export const MATERIAIS_PBR_LABELS: Record<MaterialPbrId, string> = {
   mdf_preto: "MDF Preto",
 };
 
-/** Mapeia nome legado ou display para ID do MaterialLibrary. */
 export function resolveMaterialId(nome: string): MaterialPbrId {
   const lower = nome.toLowerCase().trim();
   const map: Record<string, MaterialPbrId> = {
@@ -55,23 +49,12 @@ export function resolveMaterialId(nome: string): MaterialPbrId {
   return (map[lower] as MaterialPbrId) ?? "mdf_branco";
 }
 
-/**
- * Materiais PBR reais — sem fallback de cor sólida.
- * Cada material usa texturas (colorMap, normalMap, roughnessMap, aoMap, metalnessMap).
- */
+/** Materiais sólidos (cor, roughness, metalness, envMapIntensity). Sem texturas. */
 export const defaultMaterialSet: MaterialSet = {
   carvalho_natural: {
     name: "carvalho_natural",
-    maps: {
-      colorMap: `${BASE}textures/wood/base.svg`,
-      normalMap: `${BASE}textures/wood/normal.svg`,
-      roughnessMap: `${BASE}textures/wood/roughness.svg`,
-      metalnessMap: `${BASE}textures/wood/metalness.svg`,
-      aoMap: `${BASE}textures/wood/ao.svg`,
-    },
     options: {
       color: "#c9a27a",
-      repeat: { x: 2, y: 2 },
       metalness: 0,
       roughness: 0.52,
       envMapIntensity: 0.42,
@@ -79,16 +62,8 @@ export const defaultMaterialSet: MaterialSet = {
   },
   carvalho_escuro: {
     name: "carvalho_escuro",
-    maps: {
-      colorMap: `${BASE}textures/wood/base.svg`,
-      normalMap: `${BASE}textures/wood/normal.svg`,
-      roughnessMap: `${BASE}textures/wood/roughness.svg`,
-      metalnessMap: `${BASE}textures/wood/metalness.svg`,
-      aoMap: `${BASE}textures/wood/ao.svg`,
-    },
     options: {
       color: "#5c3d2e",
-      repeat: { x: 2, y: 2 },
       metalness: 0,
       roughness: 0.58,
       envMapIntensity: 0.38,
@@ -96,16 +71,8 @@ export const defaultMaterialSet: MaterialSet = {
   },
   nogueira: {
     name: "nogueira",
-    maps: {
-      colorMap: `${BASE}textures/wood/base.svg`,
-      normalMap: `${BASE}textures/wood/normal.svg`,
-      roughnessMap: `${BASE}textures/wood/roughness.svg`,
-      metalnessMap: `${BASE}textures/wood/metalness.svg`,
-      aoMap: `${BASE}textures/wood/ao.svg`,
-    },
     options: {
       color: "#8a5a2b",
-      repeat: { x: 2, y: 2 },
       metalness: 0,
       roughness: 0.55,
       envMapIntensity: 0.4,
@@ -113,15 +80,8 @@ export const defaultMaterialSet: MaterialSet = {
   },
   mdf_branco: {
     name: "mdf_branco",
-    maps: {
-      colorMap: `${BASE}textures/mdf/branco/map.jpg`,
-      normalMap: `${BASE}textures/mdf/branco/normal.jpg`,
-      roughnessMap: `${BASE}textures/mdf/branco/roughness.jpg`,
-      aoMap: `${BASE}textures/mdf/branco/ao.jpg`,
-    },
     options: {
       color: "#f2f0eb",
-      repeat: { x: 1, y: 1 },
       metalness: 0,
       roughness: 0.52,
       envMapIntensity: 0.4,
@@ -129,15 +89,8 @@ export const defaultMaterialSet: MaterialSet = {
   },
   mdf_cinza: {
     name: "mdf_cinza",
-    maps: {
-      colorMap: `${BASE}textures/mdf/branco/map.jpg`,
-      normalMap: `${BASE}textures/mdf/branco/normal.jpg`,
-      roughnessMap: `${BASE}textures/mdf/branco/roughness.jpg`,
-      aoMap: `${BASE}textures/mdf/branco/ao.jpg`,
-    },
     options: {
       color: "#9ca3af",
-      repeat: { x: 1, y: 1 },
       metalness: 0,
       roughness: 0.55,
       envMapIntensity: 0.38,
@@ -145,24 +98,15 @@ export const defaultMaterialSet: MaterialSet = {
   },
   mdf_preto: {
     name: "mdf_preto",
-    maps: {
-      colorMap: `${BASE}textures/mdf/branco/map.jpg`,
-      normalMap: `${BASE}textures/mdf/branco/normal.jpg`,
-      roughnessMap: `${BASE}textures/mdf/branco/roughness.jpg`,
-      aoMap: `${BASE}textures/mdf/branco/ao.jpg`,
-    },
     options: {
       color: "#1f2937",
-      repeat: { x: 1, y: 1 },
       metalness: 0,
       roughness: 0.58,
       envMapIntensity: 0.35,
     },
   },
-
 };
 
-/** Resolve preset: usa ID resolvido ou fallback para mdf_branco. */
 export function getMaterialPreset(materialSet: MaterialSet, idOrName: string): MaterialPreset | null {
   const resolved = resolveMaterialId(idOrName);
   return materialSet[resolved] ?? materialSet.mdf_branco ?? null;

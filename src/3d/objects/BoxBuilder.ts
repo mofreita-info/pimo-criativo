@@ -92,32 +92,27 @@ type PanelType = "left" | "right" | "top" | "bottom" | "back";
 
 let cachedFallbackMaterial: THREE.MeshStandardMaterial | null = null;
 
-/** Material PBR de fallback (MDF Branco) — nunca cor sólida. */
+/** Material PBR de fallback (MDF Branco) — cor sólida, sem texturas. */
 function getFallbackPBRMaterial(): THREE.MeshStandardMaterial {
   if (cachedFallbackMaterial) return cachedFallbackMaterial;
   const preset = getMaterialPreset(defaultMaterialSet, "mdf_branco");
-  if (!preset?.maps?.colorMap) {
-    throw new Error("MaterialLibrary: mdf_branco preset required");
-  }
-  const loader = new THREE.TextureLoader();
-  const { material } = createWoodMaterial(preset.maps, { ...preset.options, anisotropy: 4 }, loader);
+  if (!preset?.options) throw new Error("MaterialLibrary: mdf_branco preset required");
+  const { material } = createWoodMaterial({}, { ...preset.options });
   cachedFallbackMaterial = material;
   return material;
 }
 
 let cachedEdgeMaterial: THREE.MeshStandardMaterial | null = null;
 
-/** Material para arestas (corte) — PBR com textura, cor ligeiramente mais escura. */
+/** Material para arestas (corte) — cor ligeiramente mais escura, sem texturas. */
 function getEdgeMaterial(): THREE.MeshStandardMaterial {
   if (cachedEdgeMaterial) return cachedEdgeMaterial;
   const preset = getMaterialPreset(defaultMaterialSet, "mdf_branco");
-  if (!preset?.maps?.colorMap) throw new Error("MaterialLibrary: mdf_branco required");
-  const loader = new THREE.TextureLoader();
-  const { material } = createWoodMaterial(preset.maps, {
+  if (!preset?.options) throw new Error("MaterialLibrary: mdf_branco required");
+  const { material } = createWoodMaterial({}, {
     ...preset.options,
     color: "#b8a898",
-    anisotropy: 4,
-  }, loader);
+  });
   cachedEdgeMaterial = material;
   return material;
 }

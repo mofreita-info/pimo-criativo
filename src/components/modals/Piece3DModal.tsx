@@ -50,8 +50,8 @@ export default function Piece3DModal({
     const preset = materialNameToPreset(box.models?.[0]?.material ?? materialTipo);
     const materialSet = mergeMaterialSet(defaultMaterialSet);
     const matPreset = getMaterialPreset(materialSet, preset);
-    const loaded = matPreset?.maps?.colorMap
-      ? createWoodMaterial(matPreset.maps, { envMapIntensity: 0.4 })
+    const loaded = matPreset?.options
+      ? createWoodMaterial({}, { ...matPreset.options, envMapIntensity: 0.4 })
       : null;
 
     const scene = new THREE.Scene();
