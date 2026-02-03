@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useProject } from "../../../context/useProject";
 import Panel from "../../ui/Panel";
 import { useCadModels } from "../../../hooks/useCadModels";
-import { CATEGORIAS_CAD, getCategoriaNome } from "../../../core/cad/categories";
+import { getCategoriaNome } from "../../../core/cad/categories";
 import type { CadModel, CadModelDimensions } from "../../../core/cad/cadModels";
 import type { ProjectState } from "../../../context/projectTypes";
 
@@ -35,14 +35,6 @@ function getModelDimensions(
     }
   }
   return null;
-}
-
-function formatFileStatus(arquivo: string): string {
-  if (!arquivo) return "Ausente";
-  if (arquivo.startsWith("data:model/gltf-binary") || arquivo.startsWith("data:application/octet-stream")) return "Carregado (base64)";
-  if (arquivo.startsWith("data:")) return "Carregado";
-  if (arquivo.startsWith("http")) return "URL registada";
-  return "Ficheiro registado";
 }
 
 export default function PainelMoveis() {

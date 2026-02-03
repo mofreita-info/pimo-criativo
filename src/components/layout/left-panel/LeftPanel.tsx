@@ -9,7 +9,6 @@ import PainelMoveis from "./PainelMoveis";
 import PainelModelosDaCaixa from "./PainelModelosDaCaixa";
 import PainelModelosProntos from "./PainelModelosProntos";
 import PainelCatalogo3D from "./PainelCatalogo3D";
-import { getCatalogItemById } from "../../../catalog/catalogIndex";
 
 export type LeftPanelProps = {
   activeTab?: string;

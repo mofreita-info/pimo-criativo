@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useProject } from "../../../context/useProject";
 import { useToolbarModal } from "../../../context/ToolbarModalContext";
+import { useViewerSync } from "../../../hooks/useViewerSync";
 import {
   cutlistComPrecoFromBoxes,
   ferragensFromBoxes,
@@ -41,6 +42,7 @@ type SendSelections = {
 export default function RightToolsBar() {
   const { actions, project } = useProject();
   const { modal, openModal, closeModal } = useToolbarModal();
+  const viewerSync = useViewerSync(project);
   // Single Source of Truth: Resultados Atuais derivados de project.boxes (não project.resultados/acessorios)
   // boxes em useMemo para referência estável e evitar reexecução dos useMemo abaixo a cada render
   const boxes = useMemo(() => project.boxes ?? [], [project.boxes]);
