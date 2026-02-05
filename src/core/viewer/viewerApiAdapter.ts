@@ -12,7 +12,6 @@ import type { PimoViewerApi } from "../../context/PimoViewerContextCore";
 /** Mapeia ViewerToolMode para setTransformMode do Viewer (select = sem gizmo). */
 function toolModeToTransformMode(mode: ViewerToolMode): "translate" | "rotate" | null {
   if (mode === "select") return null;
-  if (mode === "ruler") return null;
   if (mode === "move") return "translate";
   return "rotate";
 }
@@ -54,12 +53,6 @@ export function createViewerApiAdapter(
     },
 
     setTool: (mode: ViewerToolMode): void => {
-      if (mode === "ruler") {
-        pimoApi.setRulerMode?.(true);
-        pimoApi.setTransformMode(null);
-        return;
-      }
-      pimoApi.setRulerMode?.(false);
       pimoApi.setTransformMode(toolModeToTransformMode(mode));
     },
 

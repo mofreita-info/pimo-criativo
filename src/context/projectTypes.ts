@@ -28,8 +28,6 @@ export interface ProjectState {
   selectedBoxId: string;
   workspaceBoxes: WorkspaceBox[];
   selectedWorkspaceBoxId: string;
-  /** IDs de caixas selecionadas para ações em lote (ex.: alinhar). */
-  selectedWorkspaceBoxIds: string[];
   selectedCaixaId: string;
   /** URL do modelo CAD selecionado (para preview). */
   selectedCaixaModelUrl: string | null;
@@ -57,8 +55,8 @@ export interface ProjectState {
   precoTotalAcessorios: number | null;
   precoTotalProjeto: number | null;
 
-  /** Ferramenta 3D ativa no Viewer: select, move, rotate, ruler. Opcional para compatibilidade com snapshots antigos. */
-  activeViewerTool?: "select" | "move" | "rotate" | "ruler";
+  /** Ferramenta 3D ativa no Viewer: select, move, rotate. Opcional para compatibilidade com snapshots antigos. */
+  activeViewerTool?: "select" | "move" | "rotate";
 
   /** Perfis de regras: lista de perfis + perfil ativo. */
   rulesProfiles: RulesProfilesConfig;
@@ -147,7 +145,7 @@ export type ViewerRenderResult = {
   height: number;
 };
 
-export type ViewerToolMode = "select" | "move" | "rotate" | "ruler";
+export type ViewerToolMode = "select" | "move" | "rotate";
 
 export type RoomConfig = {
   numWalls: 1 | 2 | 3 | 4;
@@ -250,8 +248,6 @@ export interface ProjectActions {
   removeWorkspaceBox: () => void;
   removeWorkspaceBoxById: (_boxId: string) => void;
   selectBox: (_boxId: string) => void;
-  /** Adiciona/remove caixa da seleção em lote (não altera seleção única). */
-  toggleWorkspaceBoxSelection: (_boxId: string) => void;
   /** Adiciona um modelo CAD (por id do catálogo) à caixa. */
   addModelToBox: (_caixaId: string, _cadModelId: string) => void;
   /** Cria uma nova caixa no workspace com o modelo CAD (modelo = Box completo). */
@@ -292,8 +288,8 @@ export interface ProjectActions {
   /** Gera PDF unificado (Técnico + Cutlist em um único ficheiro). */
   exportarPdfUnificado: () => void;
   logChangelog: (_message: string) => void;
-  /** Define a ferramenta 3D ativa (select, move, rotate, ruler) e aplica ao viewerApiAdapter. */
-  setActiveTool: (_mode: "select" | "move" | "rotate" | "ruler") => void;
+  /** Define a ferramenta 3D ativa (select, move, rotate) e aplica ao viewerApiAdapter. */
+  setActiveTool: (_mode: "select" | "move" | "rotate") => void;
   /** Atualiza regras dinâmicas; guarda no LocalStorage e força recalcular caixas. */
   updateRules: (_rules: RulesConfig) => void;
   /** Define o perfil de regras ativo; recalcula todas as caixas. */
