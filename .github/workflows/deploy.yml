@@ -23,6 +23,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # 👇 تمت إضافة هذه الخطوة هنا — هذا هو المكان الصحيح 100%
+      - name: Prepare Git for version bump
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "ci: auto commit before version bump" || echo "no changes"
+
       - name: Auto bump version
         run: |
           npm version patch
