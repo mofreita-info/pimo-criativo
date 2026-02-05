@@ -297,9 +297,17 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           profundidade: catalogItem.dimensoesDefault.profundidade_mm,
         };
 
-        // Calcular posição centralizada no workspace
-        // Posicionar no centro X (0) e Z (0), Y no chão (0)
-        const posicaoX_mm = 0;
+        // Posicionar ao lado dos modelos existentes (nunca em cima): direita do último + 100 mm
+        const GAP_MM = 100;
+        const rightmost_mm =
+          prev.workspaceBoxes.length > 0
+            ? Math.max(
+                ...prev.workspaceBoxes.map(
+                  (b) => (b.posicaoX_mm ?? 0) + (b.dimensoes?.largura ?? 0) / 2
+                )
+              )
+            : -GAP_MM;
+        const posicaoX_mm = rightmost_mm + GAP_MM + dimensoes.largura / 2;
         
         const glbPath = getCatalogGlbPath(catalogItemId);
         const models = glbPath
@@ -323,9 +331,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           catalogItemId
         );
         
-        // Marcar como posição manual para não ser reposicionada no reflow
         newBox.manualPosition = true;
         newBox.posicaoZ_mm = 0;
+        newBox.posicaoY_mm = dimensoes.altura / 2;
 
         const nextWorkspaceBoxes = [...prev.workspaceBoxes, newBox];
         const nextPrev = { ...prev, workspaceBoxes: nextWorkspaceBoxes };
@@ -355,11 +363,24 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         const selected = getSelectedWorkspaceBox(prev);
         if (!selected) return prev;
         const nextIndex = prev.workspaceBoxes.length + 1;
+        const GAP_MM = 100;
+        const rightmost_mm =
+          prev.workspaceBoxes.length > 0
+            ? Math.max(
+                ...prev.workspaceBoxes.map(
+                  (b) => (b.posicaoX_mm ?? 0) + (b.dimensoes?.largura ?? 0) / 2
+                )
+              )
+            : -GAP_MM;
+        const largura = selected.dimensoes?.largura ?? 400;
+        const posicaoX_mm = rightmost_mm + GAP_MM + largura / 2;
         const newBox: WorkspaceBox = {
           ...selected,
           id: `box-${nextIndex}`,
           nome: `${selected.nome} (cópia)`,
-          posicaoX_mm: 0,
+          posicaoX_mm,
+          posicaoY_mm: (selected.dimensoes?.altura ?? 400) / 2,
+          posicaoZ_mm: 0,
           models: (selected.models ?? []).map((m, i) => ({ ...m, id: `box-${nextIndex}-model-${Date.now()}-${i}` })),
         };
         const nextWorkspaceBoxes = [...prev.workspaceBoxes, newBox];
@@ -504,14 +525,27 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         const baseEspessura =
           prev.workspaceBoxes[0]?.espessura ?? prev.material.espessura;
         const placeholderDimensoes = { largura: 100, altura: 100, profundidade: 100 };
+        const GAP_MM = 100;
+        const rightmost_mm =
+          prev.workspaceBoxes.length > 0
+            ? Math.max(
+                ...prev.workspaceBoxes.map(
+                  (b) => (b.posicaoX_mm ?? 0) + (b.dimensoes?.largura ?? 0) / 2
+                )
+              )
+            : -GAP_MM;
+        const posicaoX_mm = rightmost_mm + GAP_MM + placeholderDimensoes.largura / 2;
         const newBox = createWorkspaceBox(
           newBoxId,
           `Módulo ${nextIndex}`,
           placeholderDimensoes,
           baseEspessura,
-          0,
+          posicaoX_mm,
           [instance]
         );
+        newBox.manualPosition = true;
+        newBox.posicaoZ_mm = 0;
+        newBox.posicaoY_mm = placeholderDimensoes.altura / 2;
         const nextWorkspaceBoxes = [...prev.workspaceBoxes, newBox];
         const nextPrev = { ...prev, workspaceBoxes: nextWorkspaceBoxes };
         const boxes = buildBoxesFromWorkspace(nextPrev);

@@ -1,0 +1,274 @@
+================================================================================
+                   ROUTES AVAILABLE - PIMO V3 (pim.pro)
+================================================================================
+
+BASE URL: https://pim.pro
+
+================================================================================
+1. HOME / MAIN APPLICATION
+================================================================================
+URL:        https://pim.pro/
+Route:      /
+Component:  src/App.tsx (main SPA with layout: Header, LeftToolbar, LeftPanel, 
+            Workspace, RightPanel, RightToolsBar, BottomPanel, Footer)
+Features:   
+  - 3D Viewer (ThreeViewer.tsx)
+  - Box management and design
+  - Material selection
+  - Cut-list generation
+  - PDF/Export functionality
+  - Real-time visualization
+Status:     PRIMARY APPLICATION
+
+================================================================================
+2. ABOUT US PAGE
+================================================================================
+URL:        https://pim.pro/sobre-nos
+Route:      /sobre-nos
+Component:  src/pages/SobreNos.tsx
+File:       SobreNos.tsx
+Purpose:    Project information, team, mission, vision
+Status:     Active
+
+================================================================================
+3. DOCUMENTATION / SYSTEM DOCS
+================================================================================
+URL:        https://pim.pro/documentacao
+Route:      /documentacao
+Component:  src/pages/Documentacao.tsx
+File:       Documentacao.tsx
+Purpose:    System documentation, user guides, technical references
+Status:     Active
+
+================================================================================
+4. ADMIN PANEL
+================================================================================
+URL:        https://pim.pro/admin
+Route:      /admin
+Component:  src/pages/AdminPanel.tsx
+File:       AdminPanel.tsx
+Sub-pages:
+  - Materials Manager (src/components/admin/MaterialsManager.tsx)
+  - Templates Manager (src/components/admin/TemplatesManager.tsx)
+  - Rules Manager (src/components/admin/RulesManager.tsx)
+  - Rules Profiles (src/components/admin/RulesProfilesPage.tsx)
+  - Ferragens/Accessories (src/components/admin/FerragensAdminPage.tsx)
+  - CAD Models (src/components/admin/CADModelsManager.tsx)
+  - Deploy Admin (src/components/admin/DeployAdminPage.tsx)
+  - File Manager (src/components/admin/FileManager.tsx)
+  - Component Types (src/components/admin/ComponentTypesAdminPage.tsx)
+Purpose:    Administrative interface for managing materials, rules, templates
+Status:     Active (requires admin access)
+
+================================================================================
+5. PROJECT ROADMAP
+================================================================================
+URL:        https://pim.pro/roadmap
+Route:      /roadmap
+Component:  src/pages/ProjectRoadmap.tsx
+Files:      ProjectRoadmap.tsx, ProjectRoadmapStyles.ts, ProjectRoadmap.css
+Purpose:    Display project roadmap, milestones, features, progress tracking
+Status:     Active
+
+================================================================================
+6. REFERENCE PANEL / SHOWCASE
+================================================================================
+URL:        https://pim.pro/painel-referencia
+Route:      /painel-referencia
+Component:  src/pages/PainelReferencia.tsx
+File:       PainelReferencia.tsx
+Purpose:    Reference panel for components, examples, use cases
+Status:     Active
+
+================================================================================
+7. DEVELOPER TEST PAGE
+================================================================================
+URL:        https://pim.pro/dev-test
+Route:      /dev-test
+Component:  src/pages/DevPimoTest.tsx
+File:       DevPimoTest.tsx
+Purpose:    Testing and development utilities (internal/private)
+Status:     Active (development only)
+Note:       Should be restricted or hidden in production
+
+================================================================================
+8. DEVELOPER ACTIONS TEST
+================================================================================
+URL:        https://pim.pro/dev-actions
+Route:      /dev-actions
+Component:  src/pages/DevActionsTest.tsx
+File:       DevActionsTest.tsx
+Purpose:    Testing actions and utilities (internal/private)
+Status:     Active (development only)
+Note:       Should be restricted or hidden in production
+
+================================================================================
+ROUTING MECHANISM
+================================================================================
+Type:       Client-side SPA (Single Page Application)
+Method:     History API (window.history.pushState)
+Handler:    src/App.tsx (useEffect hook with popstate listener)
+Logic:      Based on window.location.pathname, App.tsx renders appropriate page
+
+================================================================================
+NAVIGATION STRUCTURE
+================================================================================
+Visible Links (in UI):
+  - Header: Logo, Painel Referencia button, Roadmap button
+  - Footer: About (Sobre Nós), Documentation, Admin link
+
+Direct Access:
+  - All routes can be accessed directly via URL in browser
+  - Bookmarkable (SPA preserves state via localStorage where applicable)
+
+Conditional Routes:
+  - /dev-* routes should be restricted in production
+  - /admin might require authentication (currently not enforced)
+
+================================================================================
+AUTHENTICATION & RESTRICTIONS
+================================================================================
+Current State:  No authentication implemented
+Recommended:    Add auth layer before deploying /admin and /dev-* routes
+Suggestion:     Implement role-based access control for:
+                - /admin (admin role)
+                - /dev-* (dev/admin role)
+                - /painel-referencia (public or restricted)
+
+================================================================================
+STATE MANAGEMENT
+================================================================================
+Context Providers (wrap all pages):
+  - ProjectProvider (src/context/ProjectProvider.tsx)
+  - PimoViewerProvider (src/context/PimoViewerContext.tsx)
+  - MaterialProvider (src/context/materialContext.tsx)
+  - ToolbarModalProvider (src/context/ToolbarModalContext.tsx)
+  - ToastProvider (src/context/ToastContext.tsx)
+
+Storage:
+  - Projects saved to localStorage (key: "pimo_saved_projects")
+  - Rules profiles saved to localStorage
+  - User settings persisted locally
+
+================================================================================
+MODALS & OVERLAYS (accessible from routes)
+================================================================================
+Available Modals (triggered from main app and some pages):
+  - Validation Modal (Verificar Projeto)
+  - Image Rendering Modal (Photo Mode)
+  - Send/Export Modal (Enviar)
+  - Integration Modal (Integração)
+  - Room Creation Modal (Criar Sala)
+  - 2D Viewer Modal
+  - Piece 3D Modal
+  - Create Room Modal
+  - Generate File Modal (Gerar Arquivo)
+
+================================================================================
+STATIC ASSETS & PUBLIC ROUTES
+================================================================================
+Public folder: /public
+  - Textures: /textures/wood, /textures/metal, /textures/stone, etc.
+  - HDR: /hdr/studio_neutral.hdr
+  - SVG Icons: /vite.svg, etc.
+  - .htaccess: Server configuration (Apache)
+
+These are served as-is and do not require route handling.
+
+================================================================================
+DEPLOYMENT CHECKLIST FOR pim.pro
+================================================================================
+
+Pre-deployment:
+  [ ] Environment variables configured (.env.production)
+  [ ] Build optimization verified (npm run build)
+  [ ] dist/ folder generated and tested locally
+  [ ] All routes accessible and working
+  [ ] Forms/integrations tested (WhatsApp, email)
+  [ ] Admin routes protected or hidden in production
+
+Hosting setup:
+  [ ] Deploy dist/ folder to static host
+  [ ] Configure SPA fallback (index.html for all 404s)
+  [ ] HTTPS enabled
+  [ ] CORS headers set if API calls to external services
+  [ ] Sitemap.xml created for SEO
+  [ ] robots.txt configured
+
+Post-deployment:
+  [ ] Verify all routes accessible
+  [ ] Test responsive design on mobile
+  [ ] Monitor errors and logs
+  [ ] Check performance metrics
+  [ ] Test WhatsApp integration (if implemented)
+  [ ] Test email integration (if implemented)
+
+================================================================================
+FILES INVOLVED IN ROUTING
+================================================================================
+Main:
+  - src/App.tsx (router logic)
+  - src/main.tsx (entry point)
+  - index.html (SPA template)
+
+Pages:
+  - src/pages/SobreNos.tsx
+  - src/pages/Documentacao.tsx
+  - src/pages/AdminPanel.tsx
+  - src/pages/ProjectRoadmap.tsx
+  - src/pages/PainelReferencia.tsx
+  - src/pages/DevPimoTest.tsx
+  - src/pages/DevActionsTest.tsx
+
+Layout:
+  - src/components/layout/header/Header.tsx
+  - src/components/layout/footer/Footer.tsx
+  - src/components/layout/WhatsAppButton.tsx
+
+Context/State:
+  - src/context/ProjectProvider.tsx
+  - src/context/PimoViewerContext.tsx
+
+Config:
+  - vite.config.ts (build config)
+  - package.json (scripts)
+
+================================================================================
+NOTES & RECOMMENDATIONS
+================================================================================
+
+1. SPA Configuration:
+   - Ensure all routes fallback to index.html on hosting
+   - Use _redirects (Netlify) or vercel.json (Vercel)
+
+2. SEO Optimization:
+   - Generate dynamic meta tags in each page component
+   - Create sitemap.xml for search engines
+   - Add robots.txt
+
+3. Security:
+   - Restrict /admin and /dev-* routes with authentication
+   - Implement rate limiting for API calls
+   - Sanitize user inputs
+
+4. Performance:
+   - Code-split pages using React.lazy()
+   - Optimize 3D viewer rendering
+   - Lazy-load large assets (textures, models)
+
+5. Analytics:
+   - Track page views and user interactions
+   - Monitor error rates per route
+   - Set up alerts for critical failures
+
+6. Monitoring:
+   - Set up error tracking (e.g., Sentry)
+   - Monitor uptime and performance
+   - Log user actions for debugging
+
+================================================================================
+END OF ROUTES DOCUMENTATION
+================================================================================
+Generated: 2026-02-05
+Project: PIMO V3
+Website: pim.pro

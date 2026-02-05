@@ -1,27 +1,27 @@
 import { useMemo, useState } from "react";
 import { useProject } from "../context/useProject";
-import type { Phase, PhaseTask, RoadmapStats } from "../core/docs/projectRoadmap";
+import type { Phase, PhaseTask } from "../core/docs/projectRoadmap";
 import {
-  getCurrentPhase,
   getPhaseProgress,
   getRoadmap,
   getRoadmapStats,
   saveStoredPhases,
   statusLabel,
   statusColor,
-  isNewTask,
 } from "../core/docs/projectRoadmap";
 import { roadmapStyles } from "./ProjectRoadmapStyles";
 
 export default function ProjectRoadmap() {
   const { actions } = useProject();
   const [phases, setPhases] = useState<Phase[]>(() => getRoadmap());
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(() => new Set());
+  const [bulkStatus, setBulkStatus] = useState<PhaseTask["status"]>("done");
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPhaseTitle, setNewPhaseTitle] = useState("");
   const [newPhaseDescription, setNewPhaseDescription] = useState("");
-  const [newPhaseNotes, setNewPhaseNotes] = useState("");
 
-  const stats = useMemo<RoadmapStats>(() => getRoadmapStats(phases), [phases]);
-  const currentPhase = useMemo(() => getCurrentPhase(phases), [phases]);
+  const stats = useMemo(() => getRoadmapStats(phases), [phases]);
 
   const persist = (next: Phase[], message: string) => {
     setPhases(next);
@@ -29,460 +29,239 @@ export default function ProjectRoadmap() {
     actions.logChangelog(message);
   };
 
-  const updateTask = (
-    phaseId: string,
-    taskId: string,
-    updater: (_task: PhaseTask) => PhaseTask
-  ) => {
-    setPhases((prev) =>
-      prev.map((phase) =>
-        phase.id === phaseId
-          ? {
-              ...phase,
-              tasks: phase.tasks.map((task) =>
-                task.id === taskId ? updater(task) : task
-              ),
-            }
-          : phase
-      )
-    );
+  const toggleSelectTask = (taskId: string) => {
+    setSelectedTasks((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
   };
 
-  const handleSavePhase = (phaseId: string) => {
-    persist(phases, `Phase atualizada: ${phaseId}`);
+  const clearSelection = () => setSelectedTasks(new Set());
+
+  const applyStatusToSelected = (status: PhaseTask["status"]) => {
+    const next = phases.map((phase) => ({
+      ...phase,
+      tasks: phase.tasks.map((task) =>
+        selectedTasks.has(task.id) ? { ...task, status } : task
+      ),
+    }));
+    persist(next, `Status aplicado: ${status}`);
+    clearSelection();
+    setSelectionMode(false);
   };
 
-  const handleAddPhase = () => {
-    const title = newPhaseTitle.trim();
-    const description = newPhaseDescription.trim();
-    if (!title || !description) return;
+  const deleteSelected = () => {
+    const selectedArray = Array.from(selectedTasks);
+    const next = phases.map((phase) => ({
+      ...phase,
+      tasks: phase.tasks.filter((task) => !selectedArray.includes(task.id)),
+    }));
+    persist(next, "Tarefas removidas");
+    clearSelection();
+    setSelectionMode(false);
+  };
+
+  const createPhase = () => {
+    if (!newPhaseTitle.trim() || !newPhaseDescription.trim()) return;
     const nextPhase: Phase = {
       id: `phase_${Date.now()}`,
-      title,
-      description,
-      notes: newPhaseNotes.trim() || undefined,
+      title: newPhaseTitle.trim(),
+      description: newPhaseDescription.trim(),
       status: "todo",
       tasks: [],
     };
-    const next = [...phases, nextPhase];
-    persist(next, `Nova Phase criada: ${title}`);
+    persist([...phases, nextPhase], `Phase: ${newPhaseTitle}`);
     setNewPhaseTitle("");
     setNewPhaseDescription("");
-    setNewPhaseNotes("");
-  };
-
-  // Adicionar tarefas específicas do roadmap
-  const addSpecificTasks = () => {
-    const phaseIndex = phases.findIndex(p => p.title === "Desenvolvimento Frontend");
-    if (phaseIndex === -1) return;
-
-    const tasksToAdd = [
-      {
-        id: `task_${Date.now()}_1`,
-        title: "Melhorar UX de seleção das caixas",
-        description: "Outline mais suave e responsivo, feedback visual imediato, sem alterar materiais PBR",
-        status: "todo" as const
-      },
-      {
-        id: `task_${Date.now()}_2`,
-        title: "Implementar lazy loading para texturas e HDRI",
-        description: "Carregar apenas o essencial no início, HDRI carregado somente no modo Showcase, texturas PBR carregadas sob demanda",
-        status: "todo" as const
-      },
-      {
-        id: `task_${Date.now()}_3`,
-        title: "Criar Photo Mode integrado",
-        description: "Botão de câmera no topo, popup 'Renderização' com opções de tamanho e fundo, modo Realista + Modo Linhas para impressão, exportação de imagem em alta qualidade",
-        status: "todo" as const
-      },
-      {
-        id: `task_${Date.now()}_4`,
-        title: "Ultra Performance Mode",
-        description: "Botão no RightToolsBar, desativa normal/roughness, reduz resolução interna, simplifica luzes",
-        status: "todo" as const
-      },
-      {
-        id: `task_${Date.now()}_5`,
-        title: "Novos presets do Photo Mode",
-        description: "Frontal, Superior, Isométrico 1, Isométrico 2",
-        status: "todo" as const
-      },
-      {
-        id: `task_${Date.now()}_6`,
-        title: "Ajustes finais do Refino",
-        description: "Outline suave, sombras mais leves, brilho equilibrado",
-        status: "todo" as const
-      }
-    ];
-
-    const next = [...phases];
-    next[phaseIndex] = {
-      ...next[phaseIndex],
-      tasks: [...next[phaseIndex].tasks, ...tasksToAdd]
-    };
-    
-    persist(next, "Tarefas do roadmap adicionadas");
-  };
-
-  const addTaskToPhase = (phaseId: string, task: PhaseTask) => {
-    const next = phases.map((phase) =>
-      phase.id === phaseId ? { ...phase, tasks: [...phase.tasks, task] } : phase
-    );
-    persist(next, `Tarefa criada em ${phaseId}`);
-  };
-
-  const handleAddTask = (phaseId: string) => {
-    const task: PhaseTask = {
-      id: `task_${Date.now()}`,
-      title: "Nova tarefa",
-      description: "Descreva a tarefa",
-      status: "todo",
-    };
-    addTaskToPhase(phaseId, task);
-  };
-
-  const handleDeleteTask = (phaseId: string, taskId: string) => {
-    const next = phases.map((phase) =>
-      phase.id === phaseId
-        ? { ...phase, tasks: phase.tasks.filter((task) => task.id !== taskId) }
-        : phase
-    );
-    persist(next, `Tarefa removida: ${taskId}`);
-  };
-
-  const handleStatusChange = (phaseId: string, taskId: string, status: PhaseTask["status"]) => {
-    updateTask(phaseId, taskId, (task) => ({ ...task, status }));
-    persist(
-      phases.map((phase) =>
-        phase.id === phaseId
-          ? {
-              ...phase,
-              tasks: phase.tasks.map((task) =>
-                task.id === taskId ? { ...task, status } : task
-              ),
-            }
-          : phase
-      ),
-      `Status atualizado: ${taskId} → ${statusLabel[status]}`
-    );
+    setShowCreateModal(false);
   };
 
   return (
-    <main className="page-root">
+    <main className="roadmap-main">
       <style dangerouslySetInnerHTML={{ __html: roadmapStyles }} />
+
+      {/* Header Bar */}
+      <div className="roadmap-header-bar">
+        <div className="header-stats">
+          <div className="stat-item">
+            <span className="stat-value">{stats.progress}%</span>
+            <span className="stat-label">Progresso</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-value">{stats.doneTasks}</span>
+            <span className="stat-label">Concluídas</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-value">{stats.pendingTasks}</span>
+            <span className="stat-label">Pendentes</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-value">{stats.totalTasks}</span>
+            <span className="stat-label">Total</span>
+          </div>
+        </div>
+        <h1 className="header-title">Roadmap do Projeto</h1>
+      </div>
+
       <div className="roadmap-container">
-        {/* Header Section */}
-        <header className="roadmap-header">
-          <div className="header-content">
-            <h1 className="page-title">Roadmap do Projeto</h1>
-            <p className="page-subtitle">Visão geral do progresso e planejamento do desenvolvimento</p>
-          </div>
-        </header>
+        {/* Sidebar - Actions */}
+        <aside className="roadmap-sidebar">
+          <div className="sidebar-section">
+            <h3 className="sidebar-title">Ações</h3>
 
-        {/* Statistics Section */}
-        <section className="stats-section">
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
-                  <path d="M2 17L12 22L22 17"/>
-                  <path d="M2 12L12 17L22 12"/>
-                </svg>
-              </div>
-              <div className="stat-info">
-                <div className="stat-value">{stats.totalPhases}</div>
-                <div className="stat-label">Fases Concluídas</div>
-              </div>
-            </div>
+            <button
+              className={`action-btn ${selectionMode ? "active" : ""}`}
+              onClick={() => {
+                setSelectionMode(!selectionMode);
+                if (!selectionMode) clearSelection();
+              }}
+            >
+              {selectionMode ? "✓ Seleção Ativa" : "☑️ Selecionar"}
+            </button>
 
-            <div className="stat-card">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
-              </div>
-              <div className="stat-info">
-                <div className="stat-value">{stats.progress}%</div>
-                <div className="stat-label">Progresso Global</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 8v4l3 3"/>
-                </svg>
-              </div>
-              <div className="stat-info">
-                <div className="stat-value">{stats.pendingTasks}</div>
-                <div className="stat-label">Tarefas Pendentes</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                </svg>
-              </div>
-              <div className="stat-info">
-                <div className="stat-value">{stats.totalTasks}</div>
-                <div className="stat-label">Total de Tarefas</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-              </div>
-              <div className="stat-info">
-                <div className="stat-value">{stats.doneTasks}</div>
-                <div className="stat-label">Tarefas Concluídas</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Main Content Area */}
-        <div className="main-content">
-          {/* Timeline Section */}
-          <main className="timeline-section">
-            <div className="section-header">
-              <h2 className="section-title">Fases do Projeto</h2>
-              <p className="section-subtitle">Visão detalhada de cada fase e seu progresso</p>
-            </div>
-            
-            <div className="timeline-list">
-              {phases.map((phase) => (
-                <div key={phase.id} className="phase-card">
-                  <div className="phase-header">
-                    <div className="phase-main">
-                      <h3 className="phase-title">{phase.title}</h3>
-                      <p className="phase-description">{phase.description}</p>
-                    </div>
-                    <div className="phase-meta">
-                      <span className={`status-badge ${statusColor[phase.status]}`}>
-                        {statusLabel[phase.status]}
-                      </span>
-                      <span className="phase-progress-text">
-                        {getPhaseProgress(phase)}%
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="phase-progress">
-                    <div className="progress-info">
-                      <span className="progress-label">Progresso da Fase</span>
-                      <span className="progress-value">{getPhaseProgress(phase)}%</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{ width: `${getPhaseProgress(phase)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="phase-tasks">
-                    <div className="tasks-header">
-                      <h4 className="tasks-title">Tarefas</h4>
-                      <div className="tasks-actions">
-                        <button 
-                          className="add-task-btn"
-                          onClick={() => handleAddTask(phase.id)}
-                        >
-                          + Adicionar Tarefa
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="tasks-list">
-                      {phase.tasks.map((task) => (
-                        <div key={task.id} className="task-row">
-                          <input
-                            type="checkbox"
-                            className="task-checkbox"
-                            checked={false}
-                            onChange={() => {}}
-                          />
-                          <span className={`task-status ${statusColor[task.status]}`}>
-                            {statusLabel[task.status]}
-                          </span>
-                          <span className="task-title">{task.title}</span>
-                          {isNewTask(task) && (
-                            <span className="task-new-badge" title="Novo">
-                              novo
-                            </span>
-                          )}
-                          <div className="task-actions">
-                            <select
-                              className="task-select"
-                              value={task.status}
-                              onChange={(event) =>
-                                handleStatusChange(
-                                  phase.id,
-                                  task.id,
-                                  event.target.value as PhaseTask["status"]
-                                )
-                              }
-                            >
-                              <option value="todo">A Fazer</option>
-                              <option value="in_progress">Em Progresso</option>
-                              <option value="done">Concluído</option>
-                            </select>
-                            <button
-                              className="task-delete-btn"
-                              onClick={() => handleDeleteTask(phase.id, task.id)}
-                              title="Excluir tarefa"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+            {selectionMode && selectedTasks.size > 0 && (
+              <>
+                <div className="selection-count">
+                  {selectedTasks.size} selecionada(s)
                 </div>
-              ))}
-            </div>
-          </main>
 
-          {/* Sidebar */}
-          <aside className="sidebar-section">
-            {/* Current Phase */}
-            <div className="sidebar-card">
-              <div className="card-header">
-                <h3 className="card-title">Phase Atual</h3>
+                <select
+                  className="status-select"
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value as PhaseTask["status"])}
+                >
+                  <option value="todo">A Fazer</option>
+                  <option value="in_progress">Em Progresso</option>
+                  <option value="done">Concluído</option>
+                </select>
+
+                <button
+                  className="apply-btn"
+                  onClick={() => applyStatusToSelected(bulkStatus)}
+                >
+                  ✓ Aplicar
+                </button>
+
+                <button className="delete-btn" onClick={deleteSelected}>
+                  🗑️ Excluir
+                </button>
+
+                <button
+                  className="cancel-btn"
+                  onClick={() => {
+                    setSelectionMode(false);
+                    clearSelection();
+                  }}
+                >
+                  ✕ Cancelar
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="sidebar-section">
+            <button
+              className="create-phase-btn"
+              onClick={() => setShowCreateModal(true)}
+            >
+              ➕ Nova Phase
+            </button>
+          </div>
+        </aside>
+
+        {/* Main Content - Phases and Tasks */}
+        <div className="roadmap-content">
+          {phases.map((phase) => (
+            <div key={phase.id} className="phase-section">
+              <div className="phase-header">
+                <div className="phase-info">
+                  <h2 className="phase-title">{phase.title}</h2>
+                  <p className="phase-desc">{phase.description}</p>
+                </div>
+                <div className="phase-stats">
+                  <span className={`status-badge ${statusColor[phase.status]}`}>
+                    {statusLabel[phase.status]}
+                  </span>
+                  <span className="progress-percent">{getPhaseProgress(phase)}%</span>
+                </div>
               </div>
-              <div className="card-content">
-                {currentPhase ? (
-                  <div className="current-phase">
-                    <h4 className="current-phase-title">{currentPhase.title}</h4>
-                    <p className="current-phase-desc">{currentPhase.description}</p>
-                    <div className="current-phase-progress">
-                      <div className="progress-info">
-                        <span className="progress-label">Progresso</span>
-                        <span className="progress-value">{getPhaseProgress(currentPhase)}%</span>
-                      </div>
-                      <div className="progress-bar">
-                        <div
-                          className="progress-fill"
-                          style={{ width: `${getPhaseProgress(currentPhase)}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="phase-actions">
-                      <button className="action-btn primary" onClick={() => handleAddTask(currentPhase.id)}>
-                        + Adicionar Tarefa
-                      </button>
-                      <button className="action-btn secondary" onClick={() => handleSavePhase(currentPhase.id)}>
-                        Guardar Alterações
-                      </button>
-                    </div>
-                  </div>
+
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${getPhaseProgress(phase)}%` }}
+                />
+              </div>
+
+              <div className="tasks-container">
+                {phase.tasks.length === 0 ? (
+                  <div className="no-tasks">Sem tarefas</div>
                 ) : (
-                  <div className="empty-state">
-                    <div className="empty-icon">📋</div>
-                    <div className="empty-text">Nenhuma phase disponível</div>
-                    <div className="empty-subtext">Crie uma nova phase para começar a organizar seu projeto</div>
-                  </div>
+                  phase.tasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={`task-item ${
+                        selectedTasks.has(task.id) ? "selected" : ""
+                      } ${selectionMode ? "selectable" : ""}`}
+                      onClick={() => {
+                        if (selectionMode) toggleSelectTask(task.id);
+                      }}
+                    >
+                      {selectionMode && (
+                        <input
+                          type="checkbox"
+                          className="task-checkbox"
+                          checked={selectedTasks.has(task.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleSelectTask(task.id);
+                          }}
+                        />
+                      )}
+                      <span
+                        className={`task-status-dot ${statusColor[task.status]}`}
+                        title={statusLabel[task.status]}
+                      />
+                      <span className="task-text">{task.title}</span>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
-
-            {/* Task Actions */}
-            <div className="sidebar-card">
-              <div className="card-header">
-                <h3 className="card-title">Ações de Tarefa</h3>
-              </div>
-              <div className="card-content">
-                <div className="task-actions-panel">
-                  <div className="action-group">
-                    <button className="action-btn danger" onClick={() => {}}>
-                      🗑️ Excluir Selecionada
-                    </button>
-                    <button className="action-btn secondary" onClick={() => {}}>
-                      ✏️ Editar Estado
-                    </button>
-                  </div>
-                  <div className="action-info">
-                    <div className="info-text">Selecione uma tarefa para realizar ações</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Create New Phase */}
-            <div className="sidebar-card">
-              <div className="card-header">
-                <h3 className="card-title">Criar Nova Phase</h3>
-              </div>
-              <div className="card-content">
-                <div className="new-phase-form">
-                  <div className="form-group">
-                    <label className="form-label">Título da Phase</label>
-                    <input
-                      className="form-input"
-                      placeholder="Ex: Desenvolvimento Frontend"
-                      value={newPhaseTitle}
-                      onChange={(event) => setNewPhaseTitle(event.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Descrição</label>
-                    <input
-                      className="form-input"
-                      placeholder="Descreva o objetivo desta phase"
-                      value={newPhaseDescription}
-                      onChange={(event) => setNewPhaseDescription(event.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Notas (opcional)</label>
-                    <textarea
-                      className="form-textarea"
-                      placeholder="Detalhes adicionais sobre esta phase"
-                      value={newPhaseNotes}
-                      onChange={(event) => setNewPhaseNotes(event.target.value)}
-                    />
-                  </div>
-                  <button className="create-phase-btn" onClick={handleAddPhase}>
-                    🚀 Criar Nova Phase
-                  </button>
-                  <button className="add-tasks-btn" onClick={addSpecificTasks}>
-                    📋 Adicionar Tarefas do Roadmap
-                  </button>
-                  <button className="add-task-btn" onClick={() => {
-                    const phaseIndex = phases.findIndex(p => p.title === "Desenvolvimento Frontend");
-                    if (phaseIndex === -1) return;
-                    const task: PhaseTask = {
-                      id: `task_${Date.now()}`,
-                      title: "Tarefa de teste com etiqueta novo",
-                      description: "Esta tarefa deve exibir a etiqueta 'novo' por 48 horas.",
-                      status: "todo",
-                      isNew: true,
-                      createdAt: Date.now(),
-                    };
-                    const next = [...phases];
-                    next[phaseIndex] = {
-                      ...next[phaseIndex],
-                      tasks: [...next[phaseIndex].tasks, task]
-                    };
-                    persist(next, "Tarefa de teste adicionada");
-                  }}>
-                    🧪 Adicionar Tarefa de Teste (novo)
-                  </button>
-                </div>
-              </div>
-            </div>
-          </aside>
+          ))}
         </div>
       </div>
+
+      {/* Modal - Create Phase */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3>Criar Nova Phase</h3>
+            <input
+              type="text"
+              className="modal-input"
+              placeholder="Título"
+              value={newPhaseTitle}
+              onChange={(e) => setNewPhaseTitle(e.target.value)}
+            />
+            <input
+              type="text"
+              className="modal-input"
+              placeholder="Descrição"
+              value={newPhaseDescription}
+              onChange={(e) => setNewPhaseDescription(e.target.value)}
+            />
+            <div className="modal-actions">
+              <button onClick={() => setShowCreateModal(false)}>Cancelar</button>
+              <button onClick={createPhase} className="primary">
+                Criar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

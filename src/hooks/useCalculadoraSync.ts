@@ -13,17 +13,17 @@ type ViewerApi = {
 
 type BoxState = { index: number };
 
-/** Só passa position/rotation quando manualPosition === true (paramétricas e CAD-only). Caso contrário o Viewer aplica reflow e Y base no chão. */
+/** Posição EXCLUSIVAMENTE do projeto. manualPosition === true: X = rightmost+100mm, Y = altura/2, Z = 0 (definidos no ProjectProvider). */
 function getBoxPositionAndRotation(workspaceBox: WorkspaceBox | undefined): Partial<BoxOptions> {
   if (!workspaceBox) return {};
   const opts: Partial<BoxOptions> = {};
   if (workspaceBox.manualPosition === true) {
-    const x = workspaceBox.posicaoX_mm != null ? mmToM(workspaceBox.posicaoX_mm) : undefined;
-    const y = workspaceBox.posicaoY_mm != null ? mmToM(workspaceBox.posicaoY_mm) : undefined;
-    const z = workspaceBox.posicaoZ_mm != null ? mmToM(workspaceBox.posicaoZ_mm ?? 0) : undefined;
-    if (x !== undefined && y !== undefined && z !== undefined) {
-      opts.position = { x, y, z };
-    }
+    const x = mmToM(workspaceBox.posicaoX_mm ?? 0);
+    const z = mmToM(workspaceBox.posicaoZ_mm ?? 0);
+    const alturaMm = workspaceBox.dimensoes?.altura ?? 0;
+    const yMm = (workspaceBox.posicaoY_mm != null && workspaceBox.posicaoY_mm > 0) ? workspaceBox.posicaoY_mm : alturaMm / 2;
+    const y = mmToM(yMm);
+    opts.position = { x, y, z };
     if (workspaceBox.rotacaoY != null && Number.isFinite(workspaceBox.rotacaoY)) {
       opts.rotationY = workspaceBox.rotacaoY;
     }

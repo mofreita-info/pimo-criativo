@@ -13,17 +13,17 @@ export type Tools3DToolbarProps = {
   activeTool?: Tool3DId;
   /** Chamado ao clicar numa ferramenta; aplica ao viewer via actions.setActiveTool. */
   onToolSelect?: (toolId: Tool3DId, eventKey: string) => void;
-  /** Exploded View ativo. */
-  explodedView?: boolean;
-  /** Alternar Exploded View. */
-  onToggleExplodedView?: () => void;
+  /** Lock (colisão): impede caixas de se sobrepor quando ON. */
+  lockEnabled?: boolean;
+  /** Alternar Lock. */
+  onToggleLock?: () => void;
 };
 
 export default function Tools3DToolbar({
   activeTool = "select",
   onToolSelect,
-  explodedView = false,
-  onToggleExplodedView,
+  lockEnabled = false,
+  onToggleLock,
 }: Tools3DToolbarProps) {
   const { openModal } = useToolbarModal();
   const enabledTools: Tool3DId[] = ["select", "move", "rotate"];
@@ -83,28 +83,31 @@ export default function Tools3DToolbar({
           </button>
         );
       })}
-      <button
-        type="button"
-        title={explodedView ? "Desativar Vista Explodida" : "Vista Explodida"}
-        aria-label={explodedView ? "Desativar Vista Explodida" : "Vista Explodida"}
-        onClick={onToggleExplodedView}
-        style={{
-          width: 26,
-          height: 26,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: "none",
-          borderRadius: 4,
-          background: explodedView ? "rgba(59, 130, 246, 0.25)" : "transparent",
-          color: "var(--text-main)",
-          fontSize: 12,
-          cursor: "pointer",
-          marginLeft: 2,
-        }}
-      >
-        ⊞
-      </button>
+      {onToggleLock != null && (
+        <button
+          type="button"
+          title={lockEnabled ? "Desbloquear (permitir sobreposição)" : "Bloquear (impedir colisão)"}
+          aria-label={lockEnabled ? "Desbloquear" : "Bloquear"}
+          aria-pressed={lockEnabled}
+          onClick={onToggleLock}
+          style={{
+            width: 26,
+            height: 26,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "none",
+            borderRadius: 4,
+            background: lockEnabled ? "rgba(59, 130, 246, 0.25)" : "transparent",
+            color: "var(--text-main)",
+            fontSize: 12,
+            cursor: "pointer",
+            marginLeft: 2,
+          }}
+        >
+          🔒
+        </button>
+      )}
       <button
         type="button"
         title="Criar Sala"

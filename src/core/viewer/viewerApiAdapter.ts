@@ -99,11 +99,22 @@ export function createViewerApiAdapter(
     updateRoomElementConfig: (elementId: string, config: DoorWindowConfig): boolean => {
       return pimoApi.updateRoomElementConfig?.(elementId, config) ?? false;
     },
-    setExplodedView: (enabled: boolean): void => {
-      pimoApi.setExplodedView?.(enabled);
+    setLockEnabled: (enabled: boolean): void => {
+      pimoApi.setLockEnabled?.(enabled);
     },
-    getExplodedView: (): boolean => {
-      return pimoApi.getExplodedView?.() ?? false;
+    getLockEnabled: (): boolean => {
+      return pimoApi.getLockEnabled?.() ?? false;
+    },
+    getCombinedBoundingBox: () => {
+      const bbox = pimoApi.getCombinedBoundingBox?.();
+      return bbox ? { width: bbox.width, height: bbox.height, depth: bbox.depth } : null;
+    },
+    getSelectedBoxDimensions: () => pimoApi.getSelectedBoxDimensions?.() ?? null,
+    setDimensionsOverlayVisible: (visible: boolean): void => {
+      pimoApi.setDimensionsOverlayVisible?.(visible);
+    },
+    getDimensionsOverlayVisible: (): boolean => {
+      return pimoApi.getDimensionsOverlayVisible?.() ?? false;
     },
   };
 }

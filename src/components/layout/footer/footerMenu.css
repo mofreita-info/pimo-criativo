@@ -1,0 +1,255 @@
+/* ============================================================================
+   FOOTER MENU STYLES — PIMO Studio (Dropdown Version)
+   ============================================================================ */
+
+.footer-menu {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: auto;
+  min-height: 56px;
+  background: rgba(15, 23, 42, 0.98);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.footer-menu-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 12px 20px;
+  max-width: 100%;
+}
+
+/* Copyright Text */
+.footer-menu-copyright {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, #94a3b8);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Dropdown Container */
+.footer-menu-dropdown-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Toggle Button */
+.footer-menu-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-main, #e2e8f0);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.footer-menu-toggle:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
+}
+
+.footer-menu-toggle:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+.footer-menu-toggle-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.footer-menu-toggle-icon.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.footer-menu-dropdown {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  background: rgba(15, 23, 42, 0.99);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  min-width: 220px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: slideUp 0.15s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Menu List */
+.footer-menu-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+/* Menu Link */
+.footer-menu-link {
+  display: block;
+  padding: 10px 16px;
+  color: var(--text-muted, #94a3b8);
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.12s ease;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+
+.footer-menu-link:hover {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--text-main, #e2e8f0);
+  border-left-color: rgba(59, 130, 246, 0.6);
+}
+
+.footer-menu-link:active {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+/* Divider Label (Dev Section) */
+.footer-menu-divider-label {
+  padding: 12px 16px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 4px 0;
+  opacity: 0.8;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .footer-menu-wrapper {
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .footer-menu-copyright {
+    font-size: 11px;
+    order: 1;
+    flex-basis: 100%;
+  }
+
+  .footer-menu-dropdown-container {
+    order: 2;
+  }
+
+  .footer-menu-dropdown {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-menu {
+    min-height: 52px;
+  }
+
+  .footer-menu-wrapper {
+    padding: 8px 12px;
+  }
+
+  .footer-menu-copyright {
+    font-size: 10px;
+  }
+
+  .footer-menu-toggle {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .footer-menu-link {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .footer-menu-dropdown {
+    min-width: 180px;
+    max-height: 300px;
+  }
+}
+
+/* ============================================================================
+   SCROLLBAR STYLING
+   ============================================================================ */
+
+.footer-menu-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.footer-menu-dropdown::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.footer-menu-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+.footer-menu-dropdown::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-menu-toggle-icon,
+  .footer-menu-link,
+  .footer-menu-dropdown {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .footer-menu-toggle {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .footer-menu-link:hover {
+    border-left-color: rgba(59, 130, 246, 0.8);
+  }
+}

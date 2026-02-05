@@ -50,8 +50,12 @@ export type PimoViewerApi = {
     _cb: ((_data: { elementId: string; wallId: number; type: "door" | "window"; config: DoorWindowConfig } | null) => void) | null
   ) => void;
   updateRoomElementConfig?: (_elementId: string, _config: DoorWindowConfig) => boolean;
-  setExplodedView?: (_enabled: boolean) => void;
-  getExplodedView?: () => boolean;
+  setLockEnabled?: (_enabled: boolean) => void;
+  getLockEnabled?: () => boolean;
+  getCombinedBoundingBox?: () => { min: { x: number; y: number; z: number }; max: { x: number; y: number; z: number }; size: { x: number; y: number; z: number }; width: number; height: number; depth: number } | null;
+  getSelectedBoxDimensions?: () => { width: number; height: number; depth: number } | null;
+  setDimensionsOverlayVisible?: (_visible: boolean) => void;
+  getDimensionsOverlayVisible?: () => boolean;
 };
 
 export type PimoViewerContextValue = {

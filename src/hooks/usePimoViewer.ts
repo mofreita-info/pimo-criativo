@@ -261,12 +261,31 @@ export const usePimoViewer = (
     []
   );
 
-  const setExplodedView = useCallback((enabled: boolean) => {
-    viewerRef.current?.setExplodedView?.(enabled);
+  const setLockEnabled = useCallback((enabled: boolean) => {
+    viewerRef.current?.setLockEnabled(enabled);
   }, []);
 
-  const getExplodedView = useCallback(
-    () => viewerRef.current?.getExplodedView?.() ?? false,
+  const getLockEnabled = useCallback(
+    () => viewerRef.current?.getLockEnabled?.() ?? false,
+    []
+  );
+
+  const getCombinedBoundingBox = useCallback(
+    () => viewerRef.current?.getCombinedBoundingBox?.() ?? null,
+    []
+  );
+
+  const getSelectedBoxDimensions = useCallback(
+    () => viewerRef.current?.getSelectedBoxDimensions?.() ?? null,
+    []
+  );
+
+  const setDimensionsOverlayVisible = useCallback((visible: boolean) => {
+    viewerRef.current?.setDimensionsOverlayVisible(visible);
+  }, []);
+
+  const getDimensionsOverlayVisible = useCallback(
+    () => viewerRef.current?.getDimensionsOverlayVisible?.() ?? false,
     []
   );
 
@@ -321,6 +340,12 @@ export const usePimoViewer = (
       setOnRoomElementPlaced,
       setOnRoomElementSelected,
       updateRoomElementConfig,
+      setLockEnabled,
+      getLockEnabled,
+      getCombinedBoundingBox,
+      getSelectedBoxDimensions,
+      setDimensionsOverlayVisible,
+      getDimensionsOverlayVisible,
     }),
     [
       viewerReady,
@@ -360,8 +385,12 @@ export const usePimoViewer = (
       setOnRoomElementPlaced,
       setOnRoomElementSelected,
       updateRoomElementConfig,
-      setExplodedView,
-      getExplodedView,
+      setLockEnabled,
+      getLockEnabled,
+      getCombinedBoundingBox,
+      getSelectedBoxDimensions,
+      setDimensionsOverlayVisible,
+      getDimensionsOverlayVisible,
     ]
   );
 };

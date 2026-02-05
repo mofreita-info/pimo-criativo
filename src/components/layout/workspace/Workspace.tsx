@@ -95,12 +95,31 @@ export default function Workspace({
     viewerSync.setActiveTool(mode);
   }, [project.activeViewerTool, viewerSync]);
 
-  const [explodedView, setExplodedViewState] = useState(false);
-  const toggleExplodedView = useCallback(() => {
-    const next = !explodedView;
-    setExplodedViewState(next);
-    viewerSync.setExplodedView(next);
-  }, [explodedView, viewerSync]);
+  const [lockEnabled, setLockEnabledState] = useState(false);
+  const toggleLock = useCallback(() => {
+    const next = !lockEnabled;
+    setLockEnabledState(next);
+    viewerSync.setLockEnabled(next);
+  }, [lockEnabled, viewerSync]);
+
+  const [selectedBoxDimensions, setSelectedBoxDimensions] = useState<{ width: number; height: number; depth: number } | null>(null);
+  const isSelectMode = (project.activeViewerTool ?? "select") === "select";
+
+  useEffect(() => {
+    viewerSync.setDimensionsOverlayVisible(isSelectMode);
+  }, [isSelectMode, viewerSync]);
+
+  useEffect(() => {
+    if (!isSelectMode) {
+      setSelectedBoxDimensions(null);
+      return;
+    }
+    const t = setInterval(() => {
+      const dims = viewerSync.getSelectedBoxDimensions();
+      setSelectedBoxDimensions(dims ?? null);
+    }, 150);
+    return () => clearInterval(t);
+  }, [isSelectMode, viewerSync]);
 
   const projectRef = useRef(project);
   useEffect(() => {
@@ -205,11 +224,11 @@ export default function Workspace({
                 actions.setActiveTool(toolId);
               }
             }}
-            explodedView={explodedView}
-            onToggleExplodedView={toggleExplodedView}
+            lockEnabled={lockEnabled}
+            onToggleLock={toggleLock}
           />
         </div>
-        <div className="workspace-viewer" style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        <div className="workspace-viewer" style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", position: "relative" }}>
           <div
             ref={containerRef}
             style={{
@@ -219,6 +238,29 @@ export default function Workspace({
               height: typeof viewerHeight === "number" ? `${viewerHeight}px` : "100%",
             }}
           />
+          {isSelectMode && selectedBoxDimensions && (
+            <div
+              className="dimensions-overlay"
+              style={{
+                position: "absolute",
+                bottom: 12,
+                left: 12,
+                padding: "6px 10px",
+                background: "rgba(15, 23, 42, 0.85)",
+                borderRadius: 6,
+                fontSize: 12,
+                color: "var(--text-main, #f1f5f9)",
+                fontFamily: "var(--font-sans)",
+                display: "flex",
+                gap: 12,
+                pointerEvents: "none",
+              }}
+            >
+              <span>L {selectedBoxDimensions.width.toFixed(2)} m</span>
+              <span>A {selectedBoxDimensions.height.toFixed(2)} m</span>
+              <span>P {selectedBoxDimensions.depth.toFixed(2)} m</span>
+            </div>
+          )}
         </div>
       </div>
     </main>

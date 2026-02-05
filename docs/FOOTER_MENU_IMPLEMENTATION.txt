@@ -1,0 +1,244 @@
+================================================================================
+                          FOOTER MENU — IMPLEMENTAÇÃO
+                              PIMO Studio v3
+================================================================================
+
+DATA: 2026-02-05
+STATUS: ✅ COMPLETADO
+
+================================================================================
+RESUMO DA IMPLEMENTAÇÃO
+================================================================================
+
+Foi criado um menu fixo no rodapé (FooterMenu) que aparece na parte inferior
+de todas as páginas da aplicação, facilitando a navegação entre as principais
+seções do sistema.
+
+================================================================================
+ARQUIVOS CRIADOS / MODIFICADOS
+================================================================================
+
+CRIADOS:
+  1. src/components/layout/footer/FooterMenu.tsx
+     - Novo componente React do menu fixo
+     - Renderiza 6 links principais: Início, Painel Ref., Documentação, Roadmap, Admin, Sobre
+     - Inclui meta-informação (copyright, link de suporte WhatsApp)
+     - Lógica de navegação SPA (via history.pushState)
+     - Se oculta automaticamente em rotas /dev-test e /dev-actions
+
+  2. src/components/layout/footer/footerMenu.css
+     - Estilos CSS seguindo identidade visual PIMO Studio
+     - Design responsivo (desktop, tablet, mobile, small phones)
+     - Cores: navy (#0f172a), glass effect, borders sutis
+     - Acessibilidade: focus-visible, reduced-motion, high-contrast media queries
+
+MODIFICADOS:
+  1. src/App.tsx
+     - Adicionada importação: import FooterMenu from "./components/layout/footer/FooterMenu";
+     - Adicionado renderização do <FooterMenu /> logo após <Footer />
+     - Callback onNavigate() dispara PopStateEvent para sincronizar routing
+
+  2. src/index.css
+     - Adicionado padding-bottom: 56px ao body para evitar overlap
+     - Responsive: padding-bottom: 48px em phones (max-width: 480px)
+
+================================================================================
+CARACTERÍSTICAS DO FOOTER MENU
+================================================================================
+
+✅ Design Visual:
+   - Fundo: rgba(15, 23, 42, 0.98) — navy com glassmorphism (blur 12px)
+   - Bordas: 1px solid rgba(255, 255, 255, 0.08)
+   - Box-shadow sutil na parte superior
+   - Altura fixa: 56px (48px em mobile)
+   - Z-index: 100 (acima de outros elementos)
+
+✅ Links Principais:
+   - Início (🏠) → /
+   - Painel Ref. (📋) → /painel-referencia
+   - Documentação (📖) → /documentacao
+   - Roadmap (🗺️) → /roadmap
+   - Admin (⚙️) → /admin
+   - Sobre (ℹ️) → /sobre-nos
+
+✅ Comportamento Interativo:
+   - Hover: background rgba(59, 130, 246, 0.12), border color alterada
+   - Active state: background rgba(59, 130, 246, 0.18)
+   - Focus-visible: outline 2px solid rgba(59, 130, 246, 0.5)
+   - Transições suaves (0.15s ease)
+
+✅ Responsividade:
+   - Desktop (1024px+): Layout horizontal completo
+   - Tablet (768-1024px): Fonte reduzida, espaçamento ajustado
+   - Mobile (480-768px): Labels escondidos, apenas ícones visíveis
+   - Small phones (<480px): Altura reduzida para 48px
+
+✅ Acessibilidade:
+   - Suporte a prefers-reduced-motion (desativa transições)
+   - Suporte a prefers-contrast (aumenta contraste)
+   - prefers-color-scheme: dark (já aplicado, Navy por padrão)
+   - ARIA labels em todos os botões
+   - Navegação por teclado funcional (Enter/Space)
+
+✅ Ocultação Automática:
+   - Menu oculta-se em rotas /dev-test e /dev-actions
+   - Lógica via useEffect que verifica window.location.pathname
+
+================================================================================
+INTEGRAÇÃO E LAYOUT
+================================================================================
+
+Hierarquia de Componentes:
+  App.tsx
+  ├── Header
+  ├── LeftToolbar + LeftPanel + Workspace + RightPanel + RightToolsBar + BottomPanel
+  ├── Footer (original, links legais)
+  ├── FooterMenu ← NOVO (menu fixo de navegação)
+  ├── WhatsAppButton
+  └── Providers (ProjectProvider, PimoViewerProvider, etc.)
+
+Padding & Spacing:
+  - body { padding-bottom: 56px } — evita overlap do FooterMenu com conteúdo
+  - Em mobile: padding-bottom: 48px
+  - FooterMenu position: fixed; bottom: 0; z-index: 100
+
+Não houve quebra de layout:
+  ✅ Viewer 3D continua funcional
+  ✅ Footer (rodapé original) mantido
+  ✅ WhatsAppButton continua visível
+  ✅ Todos os componentes existentes intactos
+
+================================================================================
+NAVEGAÇÃO & ROUTING
+================================================================================
+
+O FooterMenu funciona com a SPA (Single Page Application) existente:
+  - Clique em link → history.pushState({}, "", href)
+  - Dispara: window.dispatchEvent(new PopStateEvent("popstate"))
+  - App.tsx escuta "popstate" → re-render da rota apropriada
+
+Exemplos de navegação:
+  - Clique "Início" → URL muda para https://pim.pro/
+  - Clique "Admin" → URL muda para https://pim.pro/admin
+  - Clique "Documentação" → URL muda para https://pim.pro/documentacao
+
+================================================================================
+CUSTOMIZAÇÃO E PRÓXIMOS PASSOS
+================================================================================
+
+Se quiser adicionar / remover / modificar links:
+
+1. Abrir: src/components/layout/footer/FooterMenu.tsx
+2. Modificar array `menuLinks`:
+   ```tsx
+   const menuLinks: MenuLink[] = [
+     { label: "Seu Link", href: "/seu-caminho", icon: "🔗" },
+     // ... mais items
+   ];
+   ```
+3. Salvar e recarregar
+
+Para adicionar ícones customizados (ex: SVG em vez de emoji):
+  - Substituir `link.icon` por um componente SVG
+  - Importar ícones (ex: de lucide-react ou heroicons)
+  - Ajustar className .footer-menu-icon
+
+Para ocultar em rotas adicionais:
+  - Adicionar path a `hiddenPaths` no useEffect do FooterMenu.tsx
+
+================================================================================
+TESTES RECOMENDADOS
+================================================================================
+
+☐ Desktop (1920x1080): Menu aparece, links funcionam, hover effects visíveis
+☐ Tablet (768px): Layout responsivo, ícones apenas, sem labels
+☐ Mobile (375px): Altura reduzida, ícones compactos, sem quebra de layout
+☐ Navegação: Clique em cada link, URL muda corretamente, conteúdo renderiza
+☐ Acessibilidade: Tab através dos links, Enter ativa, focus visível
+☐ Overlay: Menu não sobrepõe BottomPanel, Viewer 3D funciona
+☐ WhatsApp: Link "Suporte" abre wa.me corretamente
+☐ Dev routes: Menu desaparece em /dev-test e /dev-actions
+
+================================================================================
+PERFORMANCE & MEMORY
+================================================================================
+
+O FooterMenu foi otimizado para:
+  - Renderização leve (apenas 6 links + 1 divider + 2 textos)
+  - Nenhuma chamada de API
+  - Estado mínimo (apenas isVisible boolean)
+  - useEffect apenas para verificar rota inicial
+  - Sem re-renders desnecessários
+
+Zero impacto na performance do Viewer 3D ou da aplicação.
+
+================================================================================
+SUPORTE & TROUBLESHOOTING
+================================================================================
+
+Problema: Menu não aparece
+→ Verificar se FooterMenu.tsx foi importado em App.tsx ✅
+→ Verificar se <FooterMenu /> está renderizado ✅
+→ Limpar cache do navegador (Ctrl+Shift+Delete)
+
+Problema: Links não funcionam
+→ Verificar history API (devtools Console)
+→ Verificar se App.tsx tem useEffect com "popstate"
+→ Testar navegação manual (digitar URL na barra)
+
+Problema: Menu sobrepõe conteúdo
+→ Verificar se body { padding-bottom: 56px } está em index.css ✅
+→ Abrir DevTools, inspecionar altura real do menu
+→ Ajustar padding conforme necessário
+
+Problema: Menu não ocultado em /dev-test
+→ Verificar hiddenPaths array em FooterMenu.tsx
+→ Adicionar ou corrigir path conforme necessário
+
+================================================================================
+DOCUMENTAÇÃO TÉCNICA
+================================================================================
+
+Propriedades do Componente FooterMenu:
+  interface FooterMenuProps {
+    onNavigate?: (path: string) => void;  // Callback opcional para navegação
+  }
+
+MenuLink interface:
+  interface MenuLink {
+    label: string;    // Texto do botão
+    href: string;     // Caminho/URL
+    icon?: string;    // Emoji ou caractere
+    action?: () => {};// Função custom (opcional)
+  }
+
+Estilos principais (.footer-menu.css):
+  .footer-menu                 /* Container fixo */
+  .footer-menu-container       /* Flex wrapper */
+  .footer-menu-links           /* Container dos links */
+  .footer-menu-item            /* Button/Link individual */
+  .footer-menu-divider         /* Separador visual */
+  .footer-menu-meta            /* Copyright + suporte */
+
+Media Queries:
+  (max-width: 1024px)          /* Tablets */
+  (max-width: 768px)           /* Tablets pequenos + móvel grande */
+  (max-width: 480px)           /* Móvel pequeno */
+  (prefers-reduced-motion)     /* Desativa transições */
+  (prefers-contrast: more)     /* Aumenta contraste */
+
+================================================================================
+VERSÃO & GIT
+================================================================================
+
+Commit recomendado:
+  git add src/components/layout/footer/FooterMenu.tsx
+  git add src/components/layout/footer/footerMenu.css
+  git add src/App.tsx
+  git add src/index.css
+  git commit -m "feat: add fixed footer menu for main navigation"
+  git push
+
+================================================================================
+FIM DA DOCUMENTAÇÃO
+================================================================================

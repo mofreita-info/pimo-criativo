@@ -105,12 +105,31 @@ export const useViewerSync = (project: ProjectState): ViewerSync => {
     []
   );
 
-  const setExplodedView = useCallback((enabled: boolean) => {
-    viewerApiRef.current?.setExplodedView?.(enabled);
+  const setLockEnabled = useCallback((enabled: boolean) => {
+    viewerApiRef.current?.setLockEnabled(enabled);
   }, []);
 
-  const getExplodedView = useCallback(
-    () => viewerApiRef.current?.getExplodedView?.() ?? false,
+  const getLockEnabled = useCallback(
+    () => viewerApiRef.current?.getLockEnabled?.() ?? false,
+    []
+  );
+
+  const getCombinedBoundingBox = useCallback(
+    () => viewerApiRef.current?.getCombinedBoundingBox?.() ?? null,
+    []
+  );
+
+  const getSelectedBoxDimensions = useCallback(
+    () => viewerApiRef.current?.getSelectedBoxDimensions?.() ?? null,
+    []
+  );
+
+  const setDimensionsOverlayVisible = useCallback((visible: boolean) => {
+    viewerApiRef.current?.setDimensionsOverlayVisible(visible);
+  }, []);
+
+  const getDimensionsOverlayVisible = useCallback(
+    () => viewerApiRef.current?.getDimensionsOverlayVisible?.() ?? false,
     []
   );
 
@@ -137,7 +156,11 @@ export const useViewerSync = (project: ProjectState): ViewerSync => {
     setOnRoomElementPlaced,
     setOnRoomElementSelected,
     updateRoomElementConfig,
-    setExplodedView,
-    getExplodedView,
+    setLockEnabled,
+    getLockEnabled,
+    getCombinedBoundingBox,
+    getSelectedBoxDimensions,
+    setDimensionsOverlayVisible,
+    getDimensionsOverlayVisible,
   };
 };

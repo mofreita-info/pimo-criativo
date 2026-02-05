@@ -112,12 +112,13 @@ export class Viewer {
   private onRoomElementPlaced: ((_wallId: number, _config: DoorWindowConfig, _type: "door" | "window") => void) | null = null;
   private onRoomElementSelected: ((_data: { elementId: string; wallId: number; type: "door" | "window"; config: DoorWindowConfig } | null) => void) | null = null;
 
-  /** Exploded View: posições base (do projeto) e offsets visuais. */
-  private explodedViewEnabled = false;
-  private explodedBasePositions = new Map<string, { x: number; y: number; z: number }>();
-  private explodedOffsets = new Map<string, { x: number; y: number; z: number }>();
-  private readonly EXPLODED_OFFSET_M = 0.1;
-  private readonly EXPLODED_LERP = 0.12;
+  /** Lock: quando ativo, impede que caixas entrem uma na outra (colisão). */
+  private lockEnabled = false;
+
+  /** Overlay de dimensões da caixa selecionada (modo Selecionar). */
+  private dimensionsOverlayVisible = false;
+  private dimensionsOverlayGroup: THREE.Group | null = null;
+  private dimensionsOverlayLines: THREE.LineSegments | null = null;
 
   /** "performance" = leve, sem DOF/Bloom; "showcase" = DOF+Bloom+turntable */
   private currentMode: "performance" | "showcase" = "performance";
@@ -336,84 +337,93 @@ export class Viewer {
     return this.ultraPerformanceMode;
   }
 
-  setExplodedView(enabled: boolean): void {
-    if (this.explodedViewEnabled === enabled) return;
-    this.explodedViewEnabled = enabled;
-    if (enabled) {
-      this.explodedBasePositions.clear();
-      this.explodedOffsets.clear();
-      const positions: Array<{ id: string; x: number; y: number; z: number }> = [];
-      this.boxes.forEach((entry, id) => {
-        const p = entry.mesh.position;
-        this.explodedBasePositions.set(id, { x: p.x, y: p.y, z: p.z });
-        positions.push({ id, x: p.x, y: p.y, z: p.z });
-      });
-      if (positions.length > 1) {
-        const cx = positions.reduce((s, p) => s + p.x, 0) / positions.length;
-        const cy = positions.reduce((s, p) => s + p.y, 0) / positions.length;
-        const cz = positions.reduce((s, p) => s + p.z, 0) / positions.length;
-        positions.forEach((p) => {
-          const dx = p.x - cx;
-          const dy = p.y - cy;
-          const dz = p.z - cz;
-          const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-          const scale = this.EXPLODED_OFFSET_M / len;
-          this.explodedOffsets.set(p.id, {
-            x: dx * scale,
-            y: dy * scale,
-            z: dz * scale,
-          });
-        });
-      }
-    } else {
-      this.explodedOffsets.clear();
-    }
+  setLockEnabled(enabled: boolean): void {
+    this.lockEnabled = enabled;
   }
 
-  getExplodedView(): boolean {
-    return this.explodedViewEnabled;
+  getLockEnabled(): boolean {
+    return this.lockEnabled;
   }
 
-  private updateExplodedView(): void {
-    if (this.explodedViewEnabled && this.explodedOffsets.size > 0) {
-      this.boxes.forEach((entry, id) => {
-        const base = this.explodedBasePositions.get(id);
-        const off = this.explodedOffsets.get(id);
-        if (base && off) {
-          const target = {
-            x: base.x + off.x,
-            y: base.y + off.y,
-            z: base.z + off.z,
-          };
-          entry.mesh.position.x += (target.x - entry.mesh.position.x) * this.EXPLODED_LERP;
-          entry.mesh.position.y += (target.y - entry.mesh.position.y) * this.EXPLODED_LERP;
-          entry.mesh.position.z += (target.z - entry.mesh.position.z) * this.EXPLODED_LERP;
-        }
-      });
-    } else if (!this.explodedViewEnabled && this.explodedBasePositions.size > 0) {
-      let allDone = true;
-      this.boxes.forEach((entry, id) => {
-        const base = this.explodedBasePositions.get(id);
-        if (base) {
-          const mx = entry.mesh.position.x;
-          const my = entry.mesh.position.y;
-          const mz = entry.mesh.position.z;
-          const dx = base.x - mx;
-          const dy = base.y - my;
-          const dz = base.z - mz;
-          const eps = 0.0005;
-          if (Math.abs(dx) > eps || Math.abs(dy) > eps || Math.abs(dz) > eps) {
-            allDone = false;
-            entry.mesh.position.x += dx * this.EXPLODED_LERP;
-            entry.mesh.position.y += dy * this.EXPLODED_LERP;
-            entry.mesh.position.z += dz * this.EXPLODED_LERP;
-          } else {
-            entry.mesh.position.set(base.x, base.y, base.z);
-          }
-        }
-      });
-      if (allDone) this.explodedBasePositions.clear();
+  getCombinedBoundingBox(): { min: THREE.Vector3; max: THREE.Vector3; size: THREE.Vector3; width: number; height: number; depth: number } | null {
+    if (this.boxes.size === 0) return null;
+    this._boundingBox.makeEmpty();
+    this.boxes.forEach((entry) => this._boundingBox.expandByObject(entry.mesh));
+    const min = this._boundingBox.min.clone();
+    const max = this._boundingBox.max.clone();
+    this._boundingBox.getSize(this._size);
+    return {
+      min,
+      max,
+      size: this._size.clone(),
+      width: this._size.x,
+      height: this._size.y,
+      depth: this._size.z,
+    };
+  }
+
+  /** Dimensões da caixa selecionada (L, A, P). Usado no modo Selecionar para overlay. */
+  getSelectedBoxDimensions(): { width: number; height: number; depth: number } | null {
+    if (!this.selectedBoxId) return null;
+    const entry = this.boxes.get(this.selectedBoxId);
+    if (!entry) return null;
+    return { width: entry.width, height: entry.height, depth: entry.depth };
+  }
+
+  setDimensionsOverlayVisible(visible: boolean): void {
+    this.dimensionsOverlayVisible = visible;
+    if (visible && !this.dimensionsOverlayGroup) this.createDimensionsOverlay();
+    if (this.dimensionsOverlayGroup) this.dimensionsOverlayGroup.visible = visible;
+  }
+
+  getDimensionsOverlayVisible(): boolean {
+    return this.dimensionsOverlayVisible;
+  }
+
+  private createDimensionsOverlay(): void {
+    if (this.dimensionsOverlayGroup) return;
+    this.dimensionsOverlayGroup = new THREE.Group();
+    this.dimensionsOverlayGroup.name = "dimensionsOverlay";
+    this.sceneManager.scene.add(this.dimensionsOverlayGroup);
+    const mat = new THREE.LineBasicMaterial({ color: 0x64748b, linewidth: 1 });
+    const geo = new THREE.BufferGeometry();
+    this.dimensionsOverlayLines = new THREE.LineSegments(geo, mat);
+    this.dimensionsOverlayGroup.add(this.dimensionsOverlayLines);
+    this.dimensionsOverlayGroup.visible = this.dimensionsOverlayVisible;
+  }
+
+  private updateDimensionsOverlay(): void {
+    if (!this.dimensionsOverlayVisible || !this.dimensionsOverlayLines) return;
+    if (!this.selectedBoxId) {
+      this.dimensionsOverlayLines.visible = false;
+      return;
     }
+    const entry = this.boxes.get(this.selectedBoxId);
+    if (!entry) {
+      this.dimensionsOverlayLines.visible = false;
+      return;
+    }
+    entry.mesh.updateMatrixWorld(true);
+    this._boundingBox.setFromObject(entry.mesh);
+    const min = this._boundingBox.min.clone();
+    const max = this._boundingBox.max.clone();
+    this.dimensionsOverlayLines.visible = true;
+    const vertices = new Float32Array([
+      min.x, min.y, min.z, max.x, min.y, min.z,
+      min.x, max.y, min.z, max.x, max.y, min.z,
+      min.x, min.y, max.z, max.x, min.y, max.z,
+      min.x, max.y, max.z, max.x, max.y, max.z,
+      min.x, min.y, min.z, min.x, max.y, min.z,
+      max.x, min.y, min.z, max.x, max.y, min.z,
+      min.x, min.y, max.z, min.x, max.y, max.z,
+      max.x, min.y, max.z, max.x, max.y, max.z,
+      min.x, min.y, min.z, min.x, min.y, max.z,
+      max.x, min.y, min.z, max.x, min.y, max.z,
+      min.x, max.y, min.z, min.x, max.y, max.z,
+      max.x, max.y, min.z, max.x, max.y, max.z,
+    ]);
+    this.dimensionsOverlayLines.geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+    this.dimensionsOverlayLines.geometry.attributes.position.needsUpdate = true;
   }
 
   private initShowcaseComposer(): void {
@@ -557,6 +567,7 @@ export class Viewer {
     const cadOnly = opts.cadOnly === true;
     const { width, height, depth } = this.getBoxDimensionsFromOptions(opts);
     const index = opts.index ?? this.getNextBoxIndex();
+    const manualPosition = opts.manualPosition === true;
 
     let box: THREE.Object3D;
     let material: LoadedWoodMaterial | null = null;
@@ -585,13 +596,14 @@ export class Viewer {
 
     box.frustumCulled = false;
     box.userData.boxId = id;
-    const baseY = cadOnly ? 0 : height / 2;
-    // CAD-only sem manualPosition: (0,0,0); reflowBoxes() abaixo define X/Z. Paramétricas/idem.
-    const useReflowPosition = !(opts.manualPosition === true && opts.position);
+    const baseY = height / 2;
+    // manualPosition + position: usar EXCLUSIVAMENTE a posição do projeto (ProjectProvider). Sem offsets, recenter ou ajustes.
     const position =
-      useReflowPosition && cadOnly
-        ? { x: 0, y: 0, z: 0 }
-        : (opts.position ?? { x: 0, y: baseY, z: 0 });
+      manualPosition && opts.position
+        ? { x: opts.position.x, y: opts.position.y, z: opts.position.z }
+        : cadOnly
+          ? { x: 0, y: baseY, z: 0 }
+          : (opts.position ?? { x: 0, y: baseY, z: 0 });
     box.position.set(position.x, position.y, position.z);
     if (opts.rotationY != null && Number.isFinite(opts.rotationY)) {
       box.rotation.y = opts.rotationY;
@@ -604,7 +616,7 @@ export class Viewer {
       depth,
       index,
       cadOnly: cadOnly || undefined,
-      manualPosition: opts.manualPosition ?? false,
+      manualPosition,
       cadModels: [],
       material,
     });
@@ -668,8 +680,8 @@ export class Viewer {
         width = updated.width;
         height = updated.height;
         depth = updated.depth;
-      } else {
-        entry.mesh.position.y = 0;
+      } else if (!entry.manualPosition) {
+        entry.mesh.position.y = height / 2;
       }
     }
     if (opts.index !== undefined && opts.index !== entry.index) {
@@ -679,14 +691,11 @@ export class Viewer {
     if (opts.materialName && !entry.cadOnly) {
       this.updateBoxMaterial(id, opts.materialName);
     }
+    // manualPosition: só alterar posição quando opts.position for explícito; nunca aplicar reflow/height/2.
     if (opts.position) {
-      this.explodedBasePositions.set(id, { ...opts.position });
-      if (!this.explodedViewEnabled) {
-        entry.mesh.position.set(opts.position.x, opts.position.y, opts.position.z);
-      }
-    } else {
-      // Não alterar X/Z: vêm do reflow (ou já estão corretos). Só corrigir Y (base no chão).
-      entry.mesh.position.y = entry.cadOnly ? 0 : height / 2;
+      entry.mesh.position.set(opts.position.x, opts.position.y, opts.position.z);
+    } else if (!entry.manualPosition) {
+      entry.mesh.position.y = height / 2;
     }
     if (opts.rotationY != null && Number.isFinite(opts.rotationY)) {
       entry.mesh.rotation.y = opts.rotationY;
@@ -1016,8 +1025,8 @@ export class Viewer {
   }
 
   /**
-   * Posiciona todas as caixas (paramétricas e CAD-only) lado a lado em X/Z; não altera Y.
-   * CAD-only e paramétricas são tratadas da mesma forma; só manualPosition mantém X/Z.
+   * Posiciona caixas sem manualPosition lado a lado em X/Z.
+   * manualPosition === true: NUNCA alterar position.x, position.y nem position.z.
    */
   reflowBoxes() {
     let cursorX = 0;
@@ -1038,11 +1047,6 @@ export class Viewer {
         entry.mesh.position.z = 0;
       }
       entry.mesh.updateMatrixWorld();
-      this.explodedBasePositions.set(entry.mesh.userData.boxId as string, {
-        x: entry.mesh.position.x,
-        y: entry.mesh.position.y,
-        z: entry.mesh.position.z,
-      });
       cursorX += w + this.boxGap;
     });
   }
@@ -1224,6 +1228,7 @@ export class Viewer {
     this.onBoxSelected?.(id);
   }
 
+  /** Só chamado em objectChange (arraste do utilizador). Nunca na criação da caixa. */
   private clampTransform() {
     if (!this.transformControls || !this.selectedBoxId) return;
     const obj = this.transformControls.object;
@@ -1231,10 +1236,55 @@ export class Viewer {
     const entry = this.boxes.get(this.selectedBoxId)!;
     if (obj !== entry.mesh) return;
     if (this.transformMode === "translate") {
-      obj.position.y = entry.cadOnly ? 0 : entry.height / 2;
+      obj.updateMatrixWorld(true);
+      this._boundingBox.setFromObject(obj);
+      if (this._boundingBox.min.y < 0) {
+        obj.position.y -= this._boundingBox.min.y;
+      }
+      if (this.lockEnabled) this.applyCollisionConstraint(obj);
     } else if (this.transformMode === "rotate") {
       obj.rotation.x = 0;
       obj.rotation.z = 0;
+    }
+  }
+
+  /** Lock ON: impede interpenetração em X, Y e Z (várias passagens até não haver sobreposição). */
+  private applyCollisionConstraint(movingMesh: THREE.Object3D): void {
+    const maxIterations = 8;
+    for (let iter = 0; iter < maxIterations; iter++) {
+      movingMesh.updateMatrixWorld(true);
+      const movingBox = new THREE.Box3().setFromObject(movingMesh);
+      let anyOverlap = false;
+      this.boxes.forEach((entry, boxId) => {
+        if (boxId === this.selectedBoxId) return;
+        entry.mesh.updateMatrixWorld(true);
+        const otherBox = new THREE.Box3().setFromObject(entry.mesh);
+        if (!movingBox.intersectsBox(otherBox)) return;
+        anyOverlap = true;
+
+        const overlapX = Math.max(0, Math.min(movingBox.max.x, otherBox.max.x) - Math.max(movingBox.min.x, otherBox.min.x));
+        const overlapZ = Math.max(0, Math.min(movingBox.max.z, otherBox.max.z) - Math.max(movingBox.min.z, otherBox.min.z));
+        const overlapY = Math.max(0, Math.min(movingBox.max.y, otherBox.max.y) - Math.max(movingBox.min.y, otherBox.min.y));
+        const minOverlap = Math.min(overlapX, overlapZ, overlapY);
+        if (minOverlap <= 0) return;
+
+        const movingCenter = new THREE.Vector3();
+        movingBox.getCenter(movingCenter);
+        const otherCenter = new THREE.Vector3();
+        otherBox.getCenter(otherCenter);
+
+        if (minOverlap === overlapX) {
+          const move = movingCenter.x < otherCenter.x ? otherBox.min.x - movingBox.max.x : otherBox.max.x - movingBox.min.x;
+          movingMesh.position.x += move;
+        } else if (minOverlap === overlapZ) {
+          const move = movingCenter.z < otherCenter.z ? otherBox.min.z - movingBox.max.z : otherBox.max.z - movingBox.min.z;
+          movingMesh.position.z += move;
+        } else {
+          const move = movingCenter.y < otherCenter.y ? otherBox.min.y - movingBox.max.y : otherBox.max.y - movingBox.min.y;
+          movingMesh.position.y += move;
+        }
+      });
+      if (!anyOverlap) break;
     }
   }
 
@@ -1452,7 +1502,7 @@ export class Viewer {
       }
       this.controls?.update();
       this.lerpLightsToTarget();
-      this.updateExplodedView();
+      this.updateDimensionsOverlay();
       if (this.selectionOutline && this.selectionOutlineMaterial) {
         this.outlineCurrentOpacity += (this.outlineTargetOpacity - this.outlineCurrentOpacity) * 0.25;
         const shouldShow = this.outlineCurrentOpacity > 0.02 && this.selectionOutlineTarget;
@@ -1727,7 +1777,15 @@ export class Viewer {
       this.selectionOutlineMaterial = null;
       this.selectionOutlineTarget = null;
     }
-    
+    if (this.dimensionsOverlayLines) {
+      this.dimensionsOverlayLines.geometry.dispose();
+      (this.dimensionsOverlayLines.material as THREE.Material).dispose();
+    }
+    if (this.dimensionsOverlayGroup) {
+      this.sceneManager.scene.remove(this.dimensionsOverlayGroup);
+      this.dimensionsOverlayGroup = null;
+      this.dimensionsOverlayLines = null;
+    }
     // Limpar todos os caixotes corretamente
     this.clearBoxes();
     this.roomBuilder.clearRoom();
