@@ -911,9 +911,7 @@ export class Viewer {
             this.applyCatalogModelScale(entry, object);
           }
         } else if (entry.cadOnly) {
-          if (!entry.manualPosition) {
-            this.centerObjectInGroup(object);
-          }
+          this.centerObjectInGroup(object);
         } else {
           object.position.set(0, entry.height / 2, 0);
         }
@@ -927,14 +925,19 @@ export class Viewer {
     return true;
   }
 
-  /** Coloca o GLB com base no chão: centra em X e Z; em Y coloca a base em y=0 no grupo. */
+  /**
+   * Normaliza o pivot do modelo: centro em X/Z na origem do grupo, base no chão (y=0).
+   * Usado para modelos do Catálogo e CAD-only para que não nasçam com pivot no meio (centro da tela).
+   * Altera apenas object.position (filho); a posição do grupo (entry.mesh) não é tocada.
+   */
   private centerObjectInGroup(object: THREE.Object3D): void {
     object.updateMatrixWorld(true);
     this._boundingBox.setFromObject(object);
     this._boundingBox.getCenter(this._center);
+    this._boundingBox.getSize(this._size);
     object.position.x = -this._center.x;
     object.position.z = -this._center.z;
-    object.position.y = -this._boundingBox.min.y;
+    object.position.y = this._size.y / 2;
   }
 
   /** Guarda o bounding box base do GLB para permitir escala por dimensão. */
@@ -949,9 +952,9 @@ export class Viewer {
     };
   }
 
-  /** Ajusta escala do GLB de catálogo. manualPosition: NÃO recentrar (preserva posição do grupo). */
+  /** Ajusta escala do GLB de catálogo e normaliza pivot (base no chão, centro XZ). Grupo não é movido. */
   private applyCatalogModelScale(
-    entry: { width: number; height: number; depth: number; manualPosition?: boolean },
+    entry: { width: number; height: number; depth: number },
     object: THREE.Object3D
   ): void {
     const base = object.userData.glbBaseSize as { x: number; y: number; z: number } | undefined;
@@ -960,9 +963,7 @@ export class Viewer {
     const sy = entry.height / Math.max(base.y, 0.001);
     const sz = entry.depth / Math.max(base.z, 0.001);
     object.scale.set(sx, sy, sz);
-    if (!entry.manualPosition) {
-      this.centerObjectInGroup(object);
-    }
+    this.centerObjectInGroup(object);
   }
 
   removeModelFromBox(boxId: string, modelId: string): boolean {

@@ -96,7 +96,7 @@ export default function Header({
             cursor: "pointer",
           }}
         >
-          {projectProgressOpen ? "العودة إلى التطبيق" : "تقدم المشروع"}
+          {projectProgressOpen ? "Voltar ao App" : "Progresso do Projeto"}
         </button>
         <button
           onClick={onTogglePainelReferencia}

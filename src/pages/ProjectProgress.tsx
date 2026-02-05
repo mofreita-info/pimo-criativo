@@ -1,6 +1,6 @@
 /**
- * صفحة تقدم المشروع - Project Progress & Documentation
- * تعرض شرح كامل عن بناء المشروع والميزات المنجزة والقيد الإنجاز والمخطط
+ * Página de Progresso do Projeto - Project Progress & Documentation
+ * Exibe explicação completa sobre construção do projeto, recursos completados, em andamento e planejados
  */
 
 import { useMemo } from "react";
@@ -10,118 +10,118 @@ import { projectProgressStyles } from "./ProjectProgressStyles";
 const PROJECT_SECTIONS = [
   {
     id: "core-foundation",
-    title: "1. الأساس الأساسي للمشروع",
-    description: "البنية التحتية الأساسية للتطبيق",
+    title: "1. Fundação Principal do Projeto",
+    description: "Infraestrutura básica do aplicativo",
     status: "completed" as const,
     items: [
       { label: "React 19 + TypeScript", status: "completed" },
-      { label: "Vite كأداة البناء", status: "completed" },
-      { label: "نظام إدارة الحالة المركزية (Context API)", status: "completed" },
-      { label: "تخزين البيانات في localStorage", status: "completed" },
+      { label: "Vite como ferramenta de compilação", status: "completed" },
+      { label: "Sistema de gestão de estado centralizado (Context API)", status: "completed" },
+      { label: "Armazenamento de dados em localStorage", status: "completed" },
     ],
   },
   {
     id: "viewer-3d",
-    title: "2. محرك العرض ثلاثي الأبعاد (3D Viewer)",
-    description: "نظام العرض والتفاعل مع النماذج ثلاثية الأبعاد",
+    title: "2. Motor de Visualização 3D (3D Viewer)",
+    description: "Sistema de visualização e interação com modelos tridimensionais",
     status: "in-progress" as const,
     items: [
-      { label: "Three.js كمحرك رسومات", status: "completed" },
-      { label: "عرض النماذج GLB", status: "completed" },
-      { label: "الإضاءة والظلال الأساسية", status: "completed" },
-      { label: "أدوات التحكم (Move, Rotate, Select)", status: "completed" },
-      { label: "نظام المواد PBR (Physically Based Rendering)", status: "in-progress" },
-      { label: "محاكاة HDRI وإضاءة متقدمة", status: "in-progress" },
-      { label: "الرؤية ثنائية الأبعاد (2D Views)", status: "completed" },
+      { label: "Three.js como motor de renderização", status: "completed" },
+      { label: "Exibição de modelos GLB", status: "completed" },
+      { label: "Iluminação e sombras básicas", status: "completed" },
+      { label: "Ferramentas de controle (Move, Rotate, Select)", status: "in-progress" },
+      { label: "Sistema de materiais PBR (Physically Based Rendering)", status: "in-progress" },
+      { label: "Simulação HDRI e iluminação avançada", status: "planned" },
+      { label: "Vistas bidimensionais (2D Views)", status: "completed" },
     ],
   },
   {
     id: "layout-system",
-    title: "3. نظام التخطيط الديناميكي (Layout System)",
-    description: "ترتيب الصناديق والمكونات في الفضاء",
+    title: "3. Sistema de Layout Dinâmico (Layout System)",
+    description: "Arranjo de caixas e componentes no espaço",
     status: "in-progress" as const,
     items: [
-      { label: "إنشاء صناديق جديدة", status: "completed" },
-      { label: "حساب الأبعاد والمواضع تلقائياً", status: "completed" },
-      { label: "كشف التصادمات بين الأشياء", status: "in-progress" },
-      { label: "تحسين التخطيط الذكي", status: "planned" },
+      { label: "Criação de novas caixas", status: "completed" },
+      { label: "Cálculo automático de dimensões e posições", status: "completed" },
+      { label: "Detecção de colisões entre objetos", status: "in-progress" },
+      { label: "Otimização de layout inteligente", status: "planned" },
     ],
   },
   {
     id: "ui-components",
-    title: "4. واجهة المستخدم (UI Components)",
-    description: "الواجهات والألواح والمكونات البصرية",
+    title: "4. Interface do Usuário (UI Components)",
+    description: "Interfaces, painéis e componentes visuais",
     status: "completed" as const,
     items: [
-      { label: "اللوحة اليسرى (Left Panel) مع التبويبات", status: "completed" },
-      { label: "أدوات اليمين (Right Tools Bar)", status: "completed" },
-      { label: "شريط الأدوات العلوي (Header/Toolbar)", status: "completed" },
-      { label: "الألوان والتصميم (Dark Theme)", status: "completed" },
-      { label: "الاستجابة والتكيف (Responsive Design)", status: "in-progress" },
+      { label: "Painel esquerdo (Left Panel) com abas", status: "completed" },
+      { label: "Ferramentas direita (Right Tools Bar)", status: "completed" },
+      { label: "Barra de ferramentas superior (Header/Toolbar)", status: "completed" },
+      { label: "Cores e design (Dark Theme)", status: "completed" },
+      { label: "Responsividade e adaptação (Responsive Design)", status: "in-progress" },
     ],
   },
   {
     id: "calculations",
-    title: "5. حسابات القطع والتكاليف",
-    description: "حساب قوائم القطع والأسعار والمواد",
+    title: "5. Cálculos de Corte e Custos",
+    description: "Cálculo de listas de corte, preços e materiais",
     status: "completed" as const,
     items: [
-      { label: "خوارزمية حساب الأجزاء", status: "completed" },
-      { label: "قائمة القطع (Cut List)", status: "completed" },
-      { label: "حساب الأسعار التلقائي", status: "completed" },
-      { label: "حساب الهدر والمواد", status: "completed" },
-      { label: "تقارير مفصلة بصيغة PDF", status: "completed" },
+      { label: "Algoritmo de cálculo de peças", status: "completed" },
+      { label: "Lista de corte (Cut List)", status: "completed" },
+      { label: "Cálculo automático de preços", status: "completed" },
+      { label: "Cálculo de desperdício e materiais", status: "in-progress" },
+      { label: "Relatórios detalhados em PDF", status: "completed" },
     ],
   },
   {
     id: "catalog",
-    title: "6. نظام الكتالوج والنماذج",
-    description: "مكتبة الأثاث والملحقات والنماذج المسبقة",
+    title: "6. Sistema de Catálogo e Modelos",
+    description: "Biblioteca de móveis, acessórios e modelos predefinidos",
     status: "in-progress" as const,
     items: [
-      { label: "مؤشر الكتالوج (Catalog Index)", status: "completed" },
-      { label: "أنواع البيانات للمنتجات", status: "completed" },
-      { label: "نماذج الأثاث الجاهزة (Templates)", status: "completed" },
-      { label: "إدارة النماذج المخصصة", status: "in-progress" },
-      { label: "مكتبة الملحقات المتقدمة", status: "planned" },
+      { label: "Índice de catálogo (Catalog Index)", status: "completed" },
+      { label: "Tipos de dados para produtos", status: "completed" },
+      { label: "Modelos de móveis prontos (Templates)", status: "completed" },
+      { label: "Gestão de modelos personalizados", status: "in-progress" },
+      { label: "Biblioteca avançada de acessórios", status: "planned" },
     ],
   },
   {
     id: "export-import",
-    title: "7. التصدير والاستيراد",
-    description: "حفظ وتحميل المشاريع والملفات",
-    status: "completed" as const,
+    title: "7. Exportação e Importação",
+    description: "Salvamento e carregamento de projetos e arquivos",
+    status: "in-progress" as const,
     items: [
-      { label: "حفظ المشاريع في localStorage", status: "completed" },
-      { label: "تحميل المشاريع المحفوظة", status: "completed" },
-      { label: "تصدير PDF متقدم", status: "completed" },
-      { label: "تصدير صور (رندر الـ 3D)", status: "in-progress" },
-      { label: "تصدير ملفات CAD (إذا أمكن)", status: "planned" },
+      { label: "Salvamento de projetos em localStorage", status: "completed" },
+      { label: "Carregamento de projetos salvos", status: "completed" },
+      { label: "Exportação PDF avançada", status: "planned" },
+      { label: "Exportação de imagens (renderização 3D)", status: "in-progress" },
+      { label: "Exportação de arquivos CAD", status: "planned" },
     ],
   },
   {
     id: "admin-deploy",
-    title: "8. نظام الإدارة والنشر",
-    description: "أدوات الإدارة والتحديثات التلقائية",
+    title: "8. Sistema de Administração e Publicação",
+    description: "Ferramentas de administração e atualizações automáticas",
     status: "completed" as const,
     items: [
-      { label: "لوحة التحكم الإدارية (Admin Panel)", status: "completed" },
-      { label: "نظام الإصدارات (Versioning)", status: "completed" },
-      { label: "سجل النشر (Deploy Log)", status: "completed" },
-      { label: "النشر التلقائي (CI/CD)", status: "completed" },
-      { label: "رصد الأخطاء والتحديثات", status: "in-progress" },
+      { label: "Painel de controle administrativo (Admin Panel)", status: "completed" },
+      { label: "Sistema de versionamento (Versioning)", status: "completed" },
+      { label: "Histórico de publicação (Deploy Log)", status: "completed" },
+      { label: "Publicação automática (CI/CD)", status: "in-progress" },
+      { label: "Monitoramento de erros e atualizações", status: "in-progress" },
     ],
   },
   {
     id: "documentation",
-    title: "9. التوثيق والمراجع",
-    description: "مراجع شاملة عن النظام والهندسة",
+    title: "9. Documentação e Referências",
+    description: "Referências abrangentes sobre o sistema e engenharia",
     status: "completed" as const,
     items: [
-      { label: "لوحة المراجع (Painel de Referência)", status: "completed" },
-      { label: "شرح العمارة البرمجية", status: "completed" },
-      { label: "توثيق API الـ Viewer", status: "in-progress" },
-      { label: "أمثلة عملية وحالات استخدام", status: "planned" },
+      { label: "Painel de referências (Painel de Referência)", status: "completed" },
+      { label: "Explicação da arquitetura do programa", status: "completed" },
+      { label: "Documentação da API do Viewer", status: "in-progress" },
+      { label: "Exemplos práticos e casos de uso", status: "planned" },
     ],
   },
 ];
@@ -133,19 +133,19 @@ const STATUS_CONFIG: Record<string, {
   borderColor: string;
 }> = {
   completed: {
-    label: "✓ تم الإنجاز",
+    label: "✓ Concluído",
     color: "#22c55e",
     bgColor: "rgba(34, 197, 94, 0.1)",
     borderColor: "rgba(34, 197, 94, 0.3)",
   },
   "in-progress": {
-    label: "⚙ قيد الإنجاز",
+    label: "⚙ Em Andamento",
     color: "#3b82f6",
     bgColor: "rgba(59, 130, 246, 0.1)",
     borderColor: "rgba(59, 130, 246, 0.3)",
   },
   planned: {
-    label: "→ مخطط",
+    label: "→ Planejado",
     color: "#f59e0b",
     bgColor: "rgba(245, 158, 11, 0.1)",
     borderColor: "rgba(245, 158, 11, 0.3)",
@@ -191,9 +191,9 @@ export default function ProjectProgress() {
       {/* Header Section */}
       <section style={projectProgressStyles.header}>
         <div style={projectProgressStyles.headerContent}>
-          <h1 style={projectProgressStyles.title}>تقدم المشروع</h1>
+          <h1 style={projectProgressStyles.title}>Progresso do Projeto</h1>
           <p style={projectProgressStyles.subtitle}>
-            تتبع شامل لبناء وتطوير نظام PIMO Studio
+            Acompanhamento abrangente da construção e desenvolvimento do PIMO Studio
           </p>
         </div>
 
@@ -203,25 +203,25 @@ export default function ProjectProgress() {
             <div style={{ ...projectProgressStyles.statNumber, color: "#22c55e" }}>
               {stats.completed}
             </div>
-            <div style={projectProgressStyles.statLabel}>تم الإنجاز</div>
+            <div style={projectProgressStyles.statLabel}>Concluído</div>
           </div>
           <div style={projectProgressStyles.statBox}>
             <div style={{ ...projectProgressStyles.statNumber, color: "#3b82f6" }}>
               {stats.inProgress}
             </div>
-            <div style={projectProgressStyles.statLabel}>قيد الإنجاز</div>
+            <div style={projectProgressStyles.statLabel}>Em Andamento</div>
           </div>
           <div style={projectProgressStyles.statBox}>
             <div style={{ ...projectProgressStyles.statNumber, color: "#f59e0b" }}>
               {stats.planned}
             </div>
-            <div style={projectProgressStyles.statLabel}>مخطط</div>
+            <div style={projectProgressStyles.statLabel}>Planejado</div>
           </div>
           <div style={projectProgressStyles.statBox}>
             <div style={{ ...projectProgressStyles.statNumber, color: "#8b5cf6" }}>
               {stats.completionPercent}%
             </div>
-            <div style={projectProgressStyles.statLabel}>الإكمال</div>
+            <div style={projectProgressStyles.statLabel}>Conclusão</div>
           </div>
         </div>
 
@@ -278,7 +278,7 @@ export default function ProjectProgress() {
 
       {/* Changelog Section */}
       <section style={projectProgressStyles.changelogSection}>
-        <h2 style={projectProgressStyles.changelogTitle}>آخر التحديثات التلقائية</h2>
+        <h2 style={projectProgressStyles.changelogTitle}>Últimas Atualizações Automáticas</h2>
         <div style={projectProgressStyles.changelogList}>
           {formattedChangelog.length > 0 ? (
             formattedChangelog.map((entry, idx) => (
@@ -288,7 +288,7 @@ export default function ProjectProgress() {
               </div>
             ))
           ) : (
-            <div style={projectProgressStyles.noChangelog}>لا توجد تحديثات بعد</div>
+            <div style={projectProgressStyles.noChangelog}>Nenhuma atualização ainda</div>
           )}
         </div>
       </section>
@@ -296,17 +296,17 @@ export default function ProjectProgress() {
       {/* Footer Info */}
       <section style={projectProgressStyles.footerInfo}>
         <div style={projectProgressStyles.infoBox}>
-          <h3 style={projectProgressStyles.infoTitle}>🚀 عن المشروع</h3>
+          <h3 style={projectProgressStyles.infoTitle}>🚀 Sobre o Projeto</h3>
           <p style={projectProgressStyles.infoText}>
-            PIMO Studio هو نظام متكامل لتصميم وتخطيط الأثاث ثلاثي الأبعاد مع حسابات تفصيلية للتكاليف والمواد.
-            تم بناؤه باستخدام أحدث التقنيات مثل React 19 و Three.js والـ TypeScript، مع التركيز على الأداء والسهولة.
+            PIMO Studio é um sistema integrado para design e planejamento de móveis tridimensionais com cálculos detalhados de custos e materiais.
+            Foi construído usando as tecnologias mais modernas como React 19, Three.js e TypeScript, com foco em desempenho e facilidade de uso.
           </p>
         </div>
         <div style={projectProgressStyles.infoBox}>
-          <h3 style={projectProgressStyles.infoTitle}>📊 الإحصائيات</h3>
+          <h3 style={projectProgressStyles.infoTitle}>📊 Estatísticas</h3>
           <p style={projectProgressStyles.infoText}>
-            إجمالي الميزات: {stats.total} | العاملة: {stats.completed} | التطوير: {stats.inProgress} |
-            المخطط: {stats.planned}
+            Total de recursos: {stats.total} | Funcional: {stats.completed} | Em desenvolvimento: {stats.inProgress} |
+            Planejado: {stats.planned}
           </p>
         </div>
       </section>
