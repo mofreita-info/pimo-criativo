@@ -8,6 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # 👈 ضرورية للسماح للـ bot بعمل push و tags
 
     steps:
       - name: Checkout
@@ -23,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # 👇 تمت إضافة هذه الخطوة هنا — هذا هو المكان الصحيح 100%
+      # 👇 خطوة تنظيف Git قبل bump version — ضرورية 100%
       - name: Prepare Git for version bump
         run: |
           git config user.name "github-actions"
