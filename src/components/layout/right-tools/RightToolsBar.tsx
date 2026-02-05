@@ -63,7 +63,6 @@ export default function RightToolsBar() {
   const { modal, openModal, closeModal } = useToolbarModal();
   const workspaceBoxes = project.workspaceBoxes;
   const selectedId = project.selectedWorkspaceBoxId;
-  const selectedIds = project.selectedWorkspaceBoxIds ?? [];
   // Single Source of Truth: Resultados Atuais derivados de project.boxes (não project.resultados/acessorios)
   // boxes em useMemo para referência estável e evitar reexecução dos useMemo abaixo a cada render
   const boxes = useMemo(() => project.boxes ?? [], [project.boxes]);
@@ -352,22 +351,6 @@ export default function RightToolsBar() {
                         : "—"}
                     </div>
                     <div style={boxCardRowStyle}>
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          fontSize: 11,
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(box.id)}
-                          onChange={() => actions.toggleWorkspaceBoxSelection(box.id)}
-                        />
-                        Selecionar
-                      </label>
                       <button
                         type="button"
                         onClick={() => {
