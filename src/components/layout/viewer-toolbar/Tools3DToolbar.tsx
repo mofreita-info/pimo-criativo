@@ -44,7 +44,7 @@ export default function Tools3DToolbar({
   lockEnabled = false,
   onToggleLock,
 }: Tools3DToolbarProps) {
-  const { project, actions, viewerSync } = useProject();
+  const { project, actions } = useProject();
   const { viewerApi } = usePimoViewerContext() ?? {};
   const snapEnabled = useWallStore((state) => state.snapEnabled);
   const isRoomOpen = useWallStore((state) => state.isOpen);
@@ -203,7 +203,7 @@ export default function Tools3DToolbar({
         </button>
         {showCameraMenu && (
           <CameraViewMenu
-            onSelect={(preset) => {
+            onSelect={(preset: "bottom" | "left" | "right" | "top" | "front" | "back" | "isometric") => {
               viewerApi?.setCameraView?.(preset);
               setShowCameraMenu(false);
             }}

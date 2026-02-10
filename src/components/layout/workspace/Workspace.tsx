@@ -180,7 +180,7 @@ viewerApi.setOnBoxSelected((boxId) => {
     if (selectedObject?.type === "roomElement" && selectedObject?.id) {
       viewerApi.selectRoomElementById?.(selectedObject.id);
     }
-  }, [viewerApi, selectedObject?.type, selectedObject?.id]);
+  }, [viewerApi, selectedObject]);
 
   useEffect(() => {
     viewerApi.setOnWallTransform?.((wallIndex, position, rotation) => {

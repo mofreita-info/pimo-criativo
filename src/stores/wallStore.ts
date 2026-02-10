@@ -179,14 +179,13 @@ export const wallStore = createStore<WallStoreState>((set, get) => ({
     if (!wall) return;
 
     const current = computeWallEndpoints(wall);
-    type SnapPair = { from: Point; to: Point };
-    let bestSnap: SnapPair | null = null;
+    let bestSnap: { from: Point; to: Point } | null = null;
     let bestDistance = Infinity;
 
     walls.forEach((other) => {
       if (other.id === wallId) return;
       const target = computeWallEndpoints(other);
-      const pairs: SnapPair[] = [
+      const pairs: { from: Point; to: Point }[] = [
         { from: current.start, to: target.start },
         { from: current.start, to: target.end },
         { from: current.end, to: target.start },
@@ -201,9 +200,10 @@ export const wallStore = createStore<WallStoreState>((set, get) => ({
       });
     });
 
-if (bestSnap !== null) {
-      const dx = bestSnap.to.x - bestSnap.from.x;
-      const dz = bestSnap.to.z - bestSnap.from.z;
+    const snap = bestSnap as { from: Point; to: Point } | null;
+    if (snap) {
+      const dx = snap.to.x - snap.from.x;
+      const dz = snap.to.z - snap.from.z;
       isSnapping = true;
       get().updateWall(
         wallId,
