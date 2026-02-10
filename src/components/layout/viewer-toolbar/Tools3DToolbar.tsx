@@ -7,8 +7,7 @@
 import { useState, useRef, useEffect } from "react";
 import { TOOLS_3D_ITEMS } from "../../../constants/toolbarConfig";
 import type { Tool3DId } from "../../../constants/toolbarConfig";
-import { useWallStore, wallStore } from "../../../stores/wallStore";
-import { useUiStore } from "../../../stores/uiStore";
+ 
 import { useProject } from "../../../context/useProject";
 import { usePimoViewerContext } from "../../../hooks/usePimoViewerContext";
 import CameraViewMenu from "./CameraViewMenu";
@@ -46,14 +45,11 @@ export default function Tools3DToolbar({
 }: Tools3DToolbarProps) {
   const { project, actions } = useProject();
   const { viewerApi } = usePimoViewerContext() ?? {};
-  const snapEnabled = useWallStore((state) => state.snapEnabled);
-  const isRoomOpen = useWallStore((state) => state.isOpen);
-  const setOpen = useWallStore((state) => state.setOpen);
-  const setSelectedTool = useUiStore((state) => state.setSelectedTool);
+  
   const enabledTools: Tool3DId[] = ["select", "move", "rotate"];
   const selectedBoxId = project.selectedWorkspaceBoxId;
   const [showCameraMenu, setShowCameraMenu] = useState(false);
-  const [manualWallHidden, setManualWallHidden] = useState(false);
+  
   const cameraMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,9 +61,7 @@ export default function Tools3DToolbar({
     return () => document.removeEventListener("click", close);
   }, [showCameraMenu]);
 
-  useEffect(() => {
-    setManualWallHidden(viewerApi?.getManualWallHidden?.() ?? false);
-  }, [viewerApi]);
+  
 
   const handleClick = (id: Tool3DId, eventKey: string) => {
     onToolSelect?.(id, eventKey);
@@ -149,35 +143,7 @@ export default function Tools3DToolbar({
           🔒
         </button>
       )}
-      <button
-        type="button"
-        title={snapEnabled ? "Desativar Snap" : "Ativar Snap"}
-        aria-label={snapEnabled ? "Desativar Snap" : "Ativar Snap"}
-        aria-pressed={snapEnabled}
-        onClick={() => wallStore.getState().toggleSnap()}
-        style={{
-          width: 26,
-          height: 26,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: "none",
-          borderRadius: 4,
-          background: snapEnabled ? "rgba(59, 130, 246, 0.25)" : "transparent",
-          color: "var(--text-main)",
-          fontSize: 12,
-          cursor: "pointer",
-          marginLeft: 2,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = snapEnabled ? "rgba(59, 130, 246, 0.35)" : "rgba(255,255,255,0.06)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = snapEnabled ? "rgba(59, 130, 246, 0.25)" : "transparent";
-        }}
-      >
-        🧲
-      </button>
+      
       <div ref={cameraMenuRef} style={{ position: "relative", display: "inline-flex", marginLeft: 2 }}>
         <button
           type="button"
@@ -211,71 +177,11 @@ export default function Tools3DToolbar({
           />
         )}
       </div>
-      <button
-        type="button"
-        title={isRoomOpen ? "Ocultar Sala" : "Mostrar Sala"}
-        aria-label={isRoomOpen ? "Ocultar Sala" : "Mostrar Sala"}
-        aria-pressed={isRoomOpen}
-        onClick={() => {
-          const next = !isRoomOpen;
-          setOpen(next);
-          if (next) setSelectedTool("layout");
-        }}
-        style={{
-          ...btnStyle,
-          background: isRoomOpen ? "rgba(59, 130, 246, 0.25)" : "transparent",
-          marginLeft: 6,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = isRoomOpen ? "rgba(59, 130, 246, 0.35)" : "rgba(255,255,255,0.06)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = isRoomOpen ? "rgba(59, 130, 246, 0.25)" : "transparent";
-        }}
-      >
-        ▭
-      </button>
-      <button
-        type="button"
-        title={manualWallHidden ? "Mostrar paredes" : "Esconder parede"}
-        aria-label={manualWallHidden ? "Mostrar paredes" : "Esconder parede"}
-        aria-pressed={manualWallHidden}
-        onClick={() => {
-          const next = !manualWallHidden;
-          setManualWallHidden(next);
-          viewerApi?.setManualWallHidden?.(next);
-        }}
-        style={{
-          ...btnStyle,
-          background: manualWallHidden ? "rgba(59, 130, 246, 0.25)" : "transparent",
-          marginLeft: 2,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = manualWallHidden ? "rgba(59, 130, 246, 0.35)" : "rgba(255,255,255,0.06)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = manualWallHidden ? "rgba(59, 130, 246, 0.25)" : "transparent";
-        }}
-      >
-        {manualWallHidden ? "👁" : "🙈"}
-      </button>
+      
+      
       {selectedBoxId && (
         <>
-          <button
-            type="button"
-            title="Reativar Auto-Rotate"
-            aria-label="Reativar Auto-Rotate"
-            onClick={() => actions.updateWorkspaceBoxTransform(selectedBoxId, { autoRotateEnabled: true })}
-            style={{ ...btnStyle, marginLeft: 6, background: "transparent" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            🔄
-          </button>
+          
           <button
             type="button"
             title="Rotar 90° à direita"
