@@ -284,6 +284,15 @@ export default function LeftPanel({ activeTab = "home" }: LeftPanelProps) {
               Nenhuma caixa selecionada. Defina o nome do projeto abaixo.
             </p>
 
+            <button
+              type="button"
+              onClick={() => actions.addWorkspaceBox()}
+              className="button button-primary"
+              style={{ width: "100%", marginBottom: 12 }}
+            >
+              Criar Caixa
+            </button>
+
             <Panel title="NOME DE PROJETO">
               <input
                 type="text"
@@ -334,9 +343,21 @@ export default function LeftPanel({ activeTab = "home" }: LeftPanelProps) {
         )}
       </div>
 
+      {selectedBox && (
+        <Panel title="NOME DA CAIXA">
+          <input
+            type="text"
+            value={selectedBox.nome}
+            onChange={(e) => actions.setWorkspaceBoxNome(selectedBox.id, e.target.value)}
+            placeholder="Nome da caixa"
+            className="input input-sm"
+          />
+        </Panel>
+      )}
+
       <div className="section-title" style={{ marginTop: 20 }}>
         {selectedBox
-          ? `Caixa selecionada: ${selectedBox.nome}`
+          ? "Propriedades"
           : "Definições"}
       </div>
       {selectedBox && (
@@ -450,8 +471,23 @@ export default function LeftPanel({ activeTab = "home" }: LeftPanelProps) {
                 actions.updateWorkspaceBoxTransform(selectedBox.id, partial);
               }}
             />
-            Ativar pés (10 cm)
+            Ativar pés
           </label>
+          <div className="panel-field-row" style={{ marginTop: 8 }}>
+            <span className="panel-label">Altura dos pés:</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <input
+                type="number"
+                value={selectedBox.pe_cm ?? 10}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  actions.updateWorkspaceBoxTransform(selectedBox.id, { pe_cm: value, y_mm: (value * 10) + selectedBox.dimensoes.altura / 2 });
+                }}
+                className="input input-xs"
+              />
+              <span style={{ fontSize: 10, color: "var(--text-muted)" }}>cm</span>
+            </div>
+          </div>
           <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
             Com pés desativados, a caixa move livremente no eixo Y (sem atravessar o chão).
           </p>

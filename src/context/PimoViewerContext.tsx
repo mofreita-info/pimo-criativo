@@ -8,6 +8,7 @@ export const PimoViewerProvider = ({ children }: { children: React.ReactNode }) 
   const registerViewerApi = useCallback((api: PimoViewerApi | null) => {
     setViewerApi((prev) => {
       if (api === null) return null;
+      if (prev === api) return prev;
       if (prev !== null) return prev;
       return api;
     });

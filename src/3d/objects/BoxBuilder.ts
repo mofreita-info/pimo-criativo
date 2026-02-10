@@ -152,7 +152,7 @@ type PanelType = "left" | "right" | "top" | "bottom" | "back" | "front";
 
 type PanelSpec = { size: [number, number, number]; pos: [number, number, number] };
 
-/** Portas: SEMPRE fora da caixa; largura = largura do vão; altura = altura total; espessura 19 mm. */
+/** Portas: painéis reais com espessura 19 mm; largura e altura baseadas na caixa; posicionados à frente. */
 function getDoorSpecs(width: number, height: number, depth: number, count: number): PanelSpec[] {
   const doorCount = Math.max(0, Math.floor(count));
   if (doorCount < 1) return [];
@@ -170,7 +170,7 @@ function getDoorSpecs(width: number, height: number, depth: number, count: numbe
   return specs;
 }
 
-/** Gavetas: largura interna; profundidade = depth − 10 mm; espessura 19 mm (placeholder). */
+/** Gavetas: caixas internas (corpo) com largura, altura e profundidade baseadas na caixa. */
 function getDrawerSpecs(width: number, height: number, depth: number, count: number): PanelSpec[] {
   const drawerCount = Math.max(0, Math.floor(count));
   if (drawerCount < 1) return [];
@@ -185,6 +185,26 @@ function getDrawerSpecs(width: number, height: number, depth: number, count: num
     const y = yStart + i * drawerHeight;
     specs.push({
       size: [openingWidth, drawerHeight, drawerDepth],
+      pos: [0, y, z],
+    });
+  }
+  return specs;
+}
+
+/** Frente visível de cada gaveta: painel com espessura 19 mm à frente da caixa. */
+function getDrawerFrontSpecs(width: number, height: number, depth: number, count: number): PanelSpec[] {
+  const drawerCount = Math.max(0, Math.floor(count));
+  if (drawerCount < 1) return [];
+  const openingWidth = Math.max(0.001, width - 2 * THICKNESS_M);
+  const interiorHeight = Math.max(0.001, height - 2 * THICKNESS_M);
+  const drawerHeight = interiorHeight / drawerCount;
+  const yStart = -height / 2 + THICKNESS_M + drawerHeight / 2;
+  const z = depth / 2 + THICKNESS_M / 2;
+  const specs: PanelSpec[] = [];
+  for (let i = 0; i < drawerCount; i++) {
+    const y = yStart + i * drawerHeight;
+    specs.push({
+      size: [openingWidth, drawerHeight, THICKNESS_M],
       pos: [0, y, z],
     });
   }
@@ -313,6 +333,12 @@ export const buildBox = (options: BoxOptions = {}): BoxModel => {
       const mesh = createPanel(spec.size[0], spec.size[1], spec.size[2], `drawer-${i}`, "front", { singleMaterial: drawerMat });
       mesh.position.set(spec.pos[0], spec.pos[1], spec.pos[2]);
       if (opts.runnerType) mesh.userData.runnerType = opts.runnerType;
+      root.add(mesh);
+    });
+    const drawerFrontSpecs = getDrawerFrontSpecs(width, height, depth, drawerCount);
+    drawerFrontSpecs.forEach((spec, i) => {
+      const mesh = createPanel(spec.size[0], spec.size[1], spec.size[2], `drawer-front-${i}`, "front", { singleMaterial: drawerMat });
+      mesh.position.set(spec.pos[0], spec.pos[1], spec.pos[2]);
       root.add(mesh);
     });
   }
@@ -448,7 +474,7 @@ export function updateBoxGroup(group: THREE.Group, options?: BoxOptions | null):
       }
       return;
     }
-    if (name.startsWith("shelf-") || name.startsWith("door-") || name.startsWith("drawer-")) {
+    if (name.startsWith("shelf-") || name.startsWith("door-") || name.startsWith("drawer-") || name.startsWith("drawer-front-")) {
       toRemove.push(child);
     }
   });
@@ -479,6 +505,12 @@ export function updateBoxGroup(group: THREE.Group, options?: BoxOptions | null):
     const mesh = createPanel(spec.size[0], spec.size[1], spec.size[2], `drawer-${i}`, "front", { singleMaterial: mat as THREE.Material });
     mesh.position.set(spec.pos[0], spec.pos[1], spec.pos[2]);
     if (opts.runnerType) mesh.userData.runnerType = opts.runnerType;
+    group.add(mesh);
+  });
+  const drawerFrontSpecs = getDrawerFrontSpecs(width, height, depth, drawerCount);
+  drawerFrontSpecs.forEach((spec, i) => {
+    const mesh = createPanel(spec.size[0], spec.size[1], spec.size[2], `drawer-front-${i}`, "front", { singleMaterial: mat as THREE.Material });
+    mesh.position.set(spec.pos[0], spec.pos[1], spec.pos[2]);
     group.add(mesh);
   });
 

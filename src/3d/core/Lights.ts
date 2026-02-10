@@ -34,28 +34,28 @@ export class Lights {
     // Ambient reduzido para não “lavar” as cores do MDF
     this.ambient = new THREE.AmbientLight(
       0xffffff,
-      options.ambientIntensity ?? 0.4
+      options.ambientIntensity ?? 0.32
     );
 
     this.hemisphere = new THREE.HemisphereLight(
-      options.hemisphereSkyColor ?? 0xdfe7ff,
-      options.hemisphereGroundColor ?? 0xf2f2f2,
-      options.hemisphereIntensity ?? 0.35
+      options.hemisphereSkyColor ?? 0xe8eeff,
+      options.hemisphereGroundColor ?? 0xebeef2,
+      options.hemisphereIntensity ?? 0.4
     );
 
     // Key light: frontal diagonal, cor levemente quente, ângulo suave
     this.keyLight = new THREE.DirectionalLight(
-      options.keyLightColor ?? 0xfff4e6,
-      options.keyLightIntensity ?? 0.55
+      options.keyLightColor ?? 0xfff8f0,
+      options.keyLightIntensity ?? 0.62
     );
     this.keyLight.position.set(4.2, 5.5, 4.2);
     this.keyLight.castShadow = true;
     const shadowSize = options.shadowMapSize ?? 2048;
     this.keyLight.shadow.mapSize.width = shadowSize;
     this.keyLight.shadow.mapSize.height = shadowSize;
-    this.keyLight.shadow.radius = options.shadowRadius ?? 2.0;
-    this.keyLight.shadow.bias = options.shadowBias ?? 0.0015;
-    this.keyLight.shadow.normalBias = options.shadowNormalBias ?? 0.04;
+    this.keyLight.shadow.radius = options.shadowRadius ?? 4;
+    this.keyLight.shadow.bias = options.shadowBias ?? 0.0008;
+    this.keyLight.shadow.normalBias = options.shadowNormalBias ?? 0.03;
     // Frustum ampliado para suportar múltiplas caixas lado a lado
     this.keyLight.shadow.camera.near = 0.1;
     this.keyLight.shadow.camera.far = 20;

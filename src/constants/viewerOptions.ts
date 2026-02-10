@@ -11,15 +11,15 @@ export const DEFAULT_VIEWER_OPTIONS: Omit<ViewerOptions, "background" | "skipIni
     toneMappingExposure: 1.05,
   },
   lights: {
-    ambientIntensity: 0.4,
-    hemisphereIntensity: 0.35,
-    keyLightIntensity: 0.55,
-    fillLightIntensity: 0.15,
+    ambientIntensity: 0.32,
+    hemisphereIntensity: 0.4,
+    keyLightIntensity: 0.62,
+    fillLightIntensity: 0.18,
     rimLightIntensity: 0.14,
     shadowMapSize: 2048,
-    shadowBias: 0.0015,
-    shadowNormalBias: 0.04,
-    shadowRadius: 2.0,
+    shadowBias: 0.0008,
+    shadowNormalBias: 0.03,
+    shadowRadius: 4,
   },
   camera: {
     fov: 45,
@@ -37,7 +37,7 @@ export const DEFAULT_VIEWER_OPTIONS: Omit<ViewerOptions, "background" | "skipIni
   },
   environment: {
     groundSize: 25,
-    groundColor: "#e5e7eb",
+    groundColor: "#d4dae2",
   },
 };
 

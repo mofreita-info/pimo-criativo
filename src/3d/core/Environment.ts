@@ -12,8 +12,8 @@ export type EnvironmentOptions = {
 export const createGround = (options: EnvironmentOptions = {}) => {
   const size = options.groundSize ?? 20;
   const material = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(options.groundColor ?? "#e2e8f0"),
-    roughness: 0.9,
+    color: new THREE.Color(options.groundColor ?? "#d4dae2"),
+    roughness: 0.92,
     metalness: 0,
   });
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(size, size), material);

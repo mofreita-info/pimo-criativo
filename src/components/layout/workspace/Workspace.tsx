@@ -24,6 +24,12 @@ import { getRoomDimensionsCm, useWallStore, wallStore } from "../../../stores/wa
 import { useUiStore, uiStore } from "../../../stores/uiStore";
 import { clampOpeningNoOverlap } from "../../../utils/openingConstraints";
 
+function selectionIdsEqual(a: string[] | undefined, b: string[]): boolean {
+  const aa = a ?? [];
+  if (aa.length !== b.length) return false;
+  return aa.every((id, i) => id === b[i]);
+}
+
 type WorkspaceProps = {
   viewerBackground?: string;
   viewerHeight?: number | string;
@@ -55,6 +61,11 @@ export default function Workspace({
   const setSelectedObject = useUiStore((state) => state.setSelectedObject);
   const clearUiSelection = useUiStore((state) => state.clearSelection);
   const setSelectedTool = useUiStore((state) => state.setSelectedTool);
+
+  const lastSelectionSyncedRef = useRef<{ ids: string[]; primaryId: string | null }>({
+    ids: [],
+    primaryId: null,
+  });
 
   useEffect(() => {
     registerViewerApi(viewerApi);
@@ -144,19 +155,47 @@ export default function Workspace({
   useEffect(() => {
     viewerApi.setOnBoxSelected((boxId) => {
       if (boxId) {
-        actions.selectBox(boxId);
-        // Restaurar comportamento da aba "Móveis": não voltar para HOME se estiver em Móveis
-        const currentTool = uiStore.getState().selectedTool;
-        if (currentTool !== "moveis") {
-          setSelectedTool("home");
+        if (
+          (project.selectedWorkspaceBoxIds?.length !== 1 || project.selectedWorkspaceBoxIds[0] !== boxId) ||
+          project.selectedWorkspaceBoxId !== boxId
+        ) {
+          actions.selectBox(boxId);
         }
-        setSelectedObject({ type: "box", id: boxId });
         return;
       }
-      actions.clearSelection();
-      clearUiSelection();
+      if ((project.selectedWorkspaceBoxIds?.length ?? 0) > 0 || project.selectedWorkspaceBoxId != null) {
+        actions.clearSelection();
+        clearUiSelection();
+      }
     });
-  }, [actions, viewerApi, clearUiSelection, setSelectedObject, setSelectedTool]);
+  }, [actions, viewerApi, clearUiSelection, project.selectedWorkspaceBoxIds, project.selectedWorkspaceBoxId]);
+
+  useEffect(() => {
+    viewerApi.setOnSelectionChanged?.((ids, primaryId, primarySelectionId) => {
+      const primary = primaryId ?? null;
+      const curIds = project.selectedWorkspaceBoxIds ?? [];
+      const curPrimary = project.selectedWorkspaceBoxId ?? null;
+      const same =
+        selectionIdsEqual(curIds, ids) && curPrimary === primary;
+      if (same) return;
+      lastSelectionSyncedRef.current = { ids: [...ids], primaryId: primary };
+      actions.setWorkspaceSelection(ids, primaryId ?? undefined);
+      if (ids.length === 0) {
+        clearUiSelection();
+      } else if (primaryId && (primarySelectionId === undefined || primarySelectionId === primaryId)) {
+        setSelectedTool("moveis");
+        setSelectedObject({ type: "box", id: primaryId });
+      }
+    });
+  }, [
+    actions,
+    viewerApi,
+    clearUiSelection,
+    setSelectedObject,
+    setSelectedTool,
+    project.selectedWorkspaceBoxIds,
+    project.selectedWorkspaceBoxId,
+  ]);
 
   useEffect(() => {
     viewerApi.setOnWallSelected?.((wallIndex) => {
@@ -250,10 +289,19 @@ export default function Workspace({
   }, [viewerApi, walls]);
 
   useEffect(() => {
-    if (project.selectedWorkspaceBoxId) {
-      viewerApi.selectBox(project.selectedWorkspaceBoxId);
+    const ids = project.selectedWorkspaceBoxIds ?? [];
+    const primary = project.selectedWorkspaceBoxId ?? null;
+    const last = lastSelectionSyncedRef.current;
+    if (selectionIdsEqual(last.ids, ids) && last.primaryId === primary) return;
+    lastSelectionSyncedRef.current = { ids: [...ids], primaryId: primary };
+    if (ids.length > 0) {
+      viewerApi.setSelectedBoxIds?.(ids, primary ?? undefined);
+    } else if (primary == null) {
+      viewerApi.selectBox(null);
+    } else {
+      viewerApi.selectBox(primary);
     }
-  }, [project.selectedWorkspaceBoxId, viewerApi]);
+  }, [project.selectedWorkspaceBoxIds, project.selectedWorkspaceBoxId, viewerApi]);
 
   useEffect(() => {
     viewerApi.setOnBoxTransform((boxId, position, rotationY) => {
@@ -283,7 +331,7 @@ export default function Workspace({
     }
   }, [lockEnabled, viewerSync, project.selectedWorkspaceBoxId, actions]);
 
-  const [selectedBoxDimensions, setSelectedBoxDimensions] = useState<{ width: number; height: number; depth: number } | null>(null);
+const [selectedBoxDimensions, setSelectedBoxDimensions] = useState<{ width: number; height: number; depth: number } | null>(null);
   const [selectedBoxOverlayPosition, setSelectedBoxOverlayPosition] = useState<{ x: number; y: number } | null>(null);
   const isSelectMode = (project.activeViewerTool ?? "select") === "select";
 
@@ -291,20 +339,55 @@ export default function Workspace({
     viewerSync.setDimensionsOverlayVisible(isSelectMode);
   }, [isSelectMode, viewerSync]);
 
-  useEffect(() => {
-    if (!isSelectMode) {
-      setSelectedBoxDimensions(null);
-      setSelectedBoxOverlayPosition(null);
-      return;
+// Performance optimization: Event-driven overlay updates instead of polling
+  const [lastSelectedBoxId, setLastSelectedBoxId] = useState<string | null>(null);
+  const [lastDimensions, setLastDimensions] = useState<{ width: number; height: number; depth: number } | null>(null);
+  const [lastOverlayPosition, setLastOverlayPosition] = useState<{ x: number; y: number } | null>(null);
+
+  // Request animation frame loop for performance optimization
+  const updateOverlayPosition = useCallback(() => {
+    if (!isSelectMode || !viewerSync) return;
+
+    const currentBoxId = project.selectedWorkspaceBoxId;
+    const currentDimensions = viewerSync.getSelectedBoxDimensions();
+    const currentOverlayPosition = viewerSync.getSelectedBoxScreenPosition();
+
+    // Check if anything has changed
+    const boxChanged = currentBoxId !== lastSelectedBoxId;
+    const dimensionsChanged = currentDimensions?.width !== lastDimensions?.width ||
+      currentDimensions?.height !== lastDimensions?.height ||
+      currentDimensions?.depth !== lastDimensions?.depth;
+    const positionChanged = currentOverlayPosition?.x !== lastOverlayPosition?.x ||
+      currentOverlayPosition?.y !== lastOverlayPosition?.y;
+
+    // Update state only if something changed
+    if (boxChanged || dimensionsChanged || positionChanged) {
+      if (currentDimensions && currentOverlayPosition) {
+        setSelectedBoxDimensions(currentDimensions);
+        setSelectedBoxOverlayPosition(currentOverlayPosition);
+      } else {
+        setSelectedBoxDimensions(null);
+        setSelectedBoxOverlayPosition(null);
+      }
+
+      // Update cache
+      setLastSelectedBoxId(currentBoxId);
+      setLastDimensions(currentDimensions);
+      setLastOverlayPosition(currentOverlayPosition);
+
+      // Request next frame
+      requestAnimationFrame(updateOverlayPosition);
     }
-    const t = setInterval(() => {
-      const dims = viewerSync.getSelectedBoxDimensions();
-      setSelectedBoxDimensions(dims ?? null);
-      const pos = viewerSync.getSelectedBoxScreenPosition();
-      setSelectedBoxOverlayPosition(pos ?? null);
-    }, 150);
-    return () => clearInterval(t);
-  }, [isSelectMode, viewerSync]);
+  }, [isSelectMode, lastSelectedBoxId, lastDimensions, lastOverlayPosition, project.selectedWorkspaceBoxId, viewerSync]);
+
+  useEffect(() => {
+    if (isSelectMode) {
+      updateOverlayPosition();
+    }
+    return () => {
+      // Clean up animation frame
+    };
+  }, [isSelectMode, updateOverlayPosition]);
 
   const projectRef = useRef(project);
   useEffect(() => {
@@ -424,36 +507,41 @@ return (
             }}
           />
         </div>
-{isSelectMode && (selectedBoxDimensions || project.selectedWorkspaceBoxId) && selectedBoxOverlayPosition && (() => {
+{isSelectMode && (selectedBoxDimensions || project.selectedWorkspaceBoxId || (project.selectedWorkspaceBoxIds?.length ?? 0) > 0) && selectedBoxOverlayPosition && (() => {
             const selectedBox = project.workspaceBoxes.find((b) => b.id === project.selectedWorkspaceBoxId);
             const rotacaoY_rad = selectedBox?.rotacaoY ?? 0;
             const rotacaoGraus = rotacaoY_rad * (180 / Math.PI);
+            const multiCount = project.selectedWorkspaceBoxIds?.length ?? 0;
 const { x, y } = selectedBoxOverlayPosition;
-            console.log('Overlay rendering:', { x, y, selectedBoxOverlayPosition, selectedBoxDimensions, projectSelectedBoxId: project.selectedWorkspaceBoxId });
-            console.log('Overlay position:', { left: x, top: y - 4, transform: "translate(-50%, -100%)" });
             return (
-              <div
+<div
                 className="dimensions-overlay"
                 style={{
                   position: "absolute",
                   left: x,
                   top: y - 4,
-                  transform: "translate(-50%, -100%)",
-                  padding: "6px 10px",
-                  background: "rgba(15, 23, 42, 0.85)",
-                  borderRadius: 6,
+                  transform: "translate(-50%, -115%)",
+                  padding: "8px 12px",
+                  background: "rgba(15, 23, 42, 0.55)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: 10,
                   fontSize: 12,
                   color: "var(--text-main, #f1f5f9)",
                   fontFamily: "var(--font-sans)",
+                  fontWeight: 500,
+                  letterSpacing: "0.3px",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 4,
+                  gap: 6,
                   pointerEvents: "none",
                   whiteSpace: "nowrap",
                   zIndex: 9999,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
                 }}
               >
                 <span>DEBUG: Overlay Rendered</span>
+                {multiCount > 1 && <span>{multiCount} selecionados</span>}
                 <span>Rotação: {rotacaoGraus.toFixed(0)}°</span>
                 {selectedBoxDimensions && (
                   <div style={{ display: "flex", gap: 12 }}>
