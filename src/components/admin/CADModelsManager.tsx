@@ -177,11 +177,9 @@ export default function CADModelsManager() {
         {form.arquivo && (
           <div style={{ marginTop: 12 }}>
             <ThreeViewer
-              modelUrl={form.arquivo}
               height={300}
               backgroundColor="#f0f0f0"
-              showFloor={false}
-              colorize={true}
+              viewerOptions={form.arquivo ? { skipInitialBox: true } : undefined}
             />
           </div>
         )}

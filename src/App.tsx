@@ -12,7 +12,7 @@ import SobreNos from "./pages/SobreNos";
 import Documentacao from "./pages/Documentacao";
 import AdminPanel from "./pages/AdminPanel";
 import ProjectProgress from "./pages/ProjectProgress";
-import DevPimoTest from "./pages/DevPimoTest";
+import DevPimoTest from "./__dev__/DevPimoTest";
 import { PimoViewerProvider } from "./context/PimoViewerContext";
 import { ProjectProvider } from "./context/ProjectProvider";
 import { MaterialProvider } from "./context/materialContext";
@@ -175,14 +175,16 @@ export default function App() {
           ) : (
             <ToolbarModalProvider>
             <div className="app-panels">
-              <LeftToolbar
-                selectedId={leftPanelTab}
-                onSelect={(id) => {
-                  setLeftPanelTab(id);
-                  clearSelection();
-                  if (!leftOpen) setLeftOpen(true);
-                }}
-              />
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <LeftToolbar
+                  selectedId={leftPanelTab}
+                  onSelect={(id) => {
+                    setLeftPanelTab(id);
+                    clearSelection();
+                    if (!leftOpen) setLeftOpen(true);
+                  }}
+                />
+              </div>
               {/* LEFT PANEL */}
               <div
                 className="panel panel-shell panel-shell--side left-panel panel-shell-left"
@@ -193,6 +195,7 @@ export default function App() {
                   overflow: "hidden",
                   transition: "width 0.2s ease",
                   position: "relative",
+                  zIndex: 1,
                 }}
               >
                 <LeftPanel activeTab={leftPanelTab} />
@@ -207,7 +210,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* WORKSPACE */}
+              {/* WORKSPACE — camada inferior (z-index: 0) para não cobrir modais/popovers */}
               <Workspace
                 viewerBackground={VIEWER_BACKGROUND}
                 viewerHeight="100%"
@@ -222,9 +225,11 @@ export default function App() {
                   minWidth: rightOpen ? 260 : 0,
                   overflow: "hidden",
                   transition: "width 0.2s ease",
+                  position: "relative",
+                  zIndex: 1,
                 }}
               >
-                <div className="right-panel-stack">
+                <div className="right-panel-stack" data-material-panel>
                   <RightPanel />
                   <RightToolsBar />
                 </div>

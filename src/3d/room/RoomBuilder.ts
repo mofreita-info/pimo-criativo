@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import type { DoorWindowConfig, RoomConfig } from "./types";
 
+/** Quando true, a funcionalidade de sala 3D (paredes, portas, janelas) está desativada. O RoomBuilder mantém apenas a API vazia para compatibilidade. */
+export const ROOM_BUILDER_DISABLED = true;
+
 export type RoomElementEntry = {
   type: "door" | "window";
   wallId: number;
@@ -10,8 +13,9 @@ export type RoomElementEntry = {
 };
 
 /**
- * Stub temporário: sistema de sala removido para estabilizar o deploy.
- * Mantém apenas a API pública para compatibilidade, sem lógica de sala.
+ * Stub de sala: sistema de sala 3D foi desativado para estabilizar o deploy (ROOM_BUILDER_DISABLED).
+ * Todas as operações são no-op e retornam valores vazios/neutros. A API é mantida para que Viewer
+ * e viewerApiAdapter não quebrem. Quando a sala for reativada, a lógica deve ser implementada aqui.
  */
 export class RoomBuilder {
   private readonly group = new THREE.Group();

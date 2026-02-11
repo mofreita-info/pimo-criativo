@@ -247,8 +247,6 @@ export type ProjectSnapshot = {
 
 export type ViewerSync = {
   notifyChangeSignal: unknown;
-  applyStateToViewer: () => void;
-  extractStateFromViewer: () => void;
   saveViewerSnapshot: () => ViewerSnapshot | null;
   restoreViewerSnapshot: (_snapshot: ViewerSnapshot | null) => void;
   registerViewerApi: (_api: ViewerApi | null) => void;
@@ -319,8 +317,8 @@ export interface ProjectActions {
   clearExtractedPartsForBox: (_boxId: string, _modelInstanceId?: string) => void;
   setModelPositionInBox: (_boxId: string, _modelInstanceId: string, _position: { x: number; y: number; z: number }) => void;
   setLayoutWarnings: (_warnings: LayoutWarnings) => void;
+  /** Atualiza posição X da caixa no workspace (mm). Fonte única para atualização de posição. */
   updateWorkspacePosition: (_boxId: string, _posicaoX_mm: number) => void;
-  updateWorkspaceBoxPosition: (_boxId: string, _posicaoX_mm: number) => void;
   /** Atualiza posição/rotação/manual da caixa no viewer (manipulação visual; não altera cut list). */
   updateWorkspaceBoxTransform: (
     _boxId: string,

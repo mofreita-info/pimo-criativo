@@ -101,7 +101,7 @@ export function StepperPopover({
   value: number;
   min?: number;
   max?: number;
-  onChange: (v: number) => void;
+  onChange: (_v: number) => void;
   id?: string;
 }) {
   const v = Math.max(min, Math.min(max, Math.floor(value)));

@@ -10,7 +10,7 @@ export type ToolbarModalType = "projects" | "2d" | "image" | "send" | "integrati
 
 type ToolbarModalContextValue = {
   modal: ToolbarModalType;
-  openModal: (type: ToolbarModalType) => void;
+  openModal: (_type: ToolbarModalType) => void;
   closeModal: () => void;
 };
 

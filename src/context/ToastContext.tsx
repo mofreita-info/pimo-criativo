@@ -13,7 +13,7 @@ export type ToastMessage = {
 
 type ToastContextValue = {
   toasts: ToastMessage[];
-  showToast: (text: string, type?: ToastMessage["type"], duration?: number) => void;
+  showToast: (_text: string, _type?: ToastMessage["type"], _duration?: number) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);

@@ -2,17 +2,11 @@ import { useEffect, useRef } from "react";
 import { Viewer } from "../3d/core/Viewer";
 import type { ViewerOptions } from "../3d/core/Viewer";
 
-type ThreeViewerProps = {
+/** Props do ThreeViewer: apenas as utilizadas pelo componente (sem APIs falsas). */
+export type ThreeViewerProps = {
   height?: number | string;
   backgroundColor?: string;
   viewerOptions?: Omit<ViewerOptions, "background">;
-  modelUrl?: string;
-  cubeCount?: number;
-  cubeSize?: number;
-  animationEnabled?: boolean;
-  materialId?: string;
-  showFloor?: boolean;
-  colorize?: boolean;
 };
 
 export default function ThreeViewer({

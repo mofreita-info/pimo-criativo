@@ -31,6 +31,7 @@ export interface Wall {
 }
 
 export interface WallStoreState {
+  /** Painel de sala (paredes) aberto na UI. */
   isOpen: boolean;
   walls: Wall[];
   selectedWallId: string | null;
@@ -39,22 +40,22 @@ export interface WallStoreState {
   snapEnabled: boolean;
   snapThreshold: number;
   createWall: () => void;
-  removeWall: (id: string) => void;
-  updateWall: (id: string, patch: Partial<Wall>, options?: { skipSnap?: boolean }) => void;
-  selectWall: (id: string | null) => void;
-  setOpen: (isOpen: boolean) => void;
+  removeWall: (_id: string) => void;
+  updateWall: (_id: string, _patch: Partial<Wall>, _options?: { skipSnap?: boolean }) => void;
+  selectWall: (_id: string | null) => void;
+  setOpen: (_isOpen: boolean) => void;
   /** Define qual parede é a parede frontal (principal) do projeto. */
-  setMainWallIndex: (index: 0 | 1 | 2 | 3) => void;
+  setMainWallIndex: (_index: 0 | 1 | 2 | 3) => void;
   toggleSnap: () => void;
-  applySnapping: (wallId: string) => void;
+  applySnapping: (_wallId: string) => void;
   /** Recria a sala com 3 paredes padrão (formato em "U"). */
   resetRoom: () => void;
   /** Limpa a sala (sem paredes). */
   clearRoom: () => void;
   /** Define numWalls (3 ou 4); ajusta lista de paredes se necessário. */
-  setNumWalls: (n: 3 | 4) => void;
+  setNumWalls: (_n: 3 | 4) => void;
   /** Restaura estado a partir de snapshot (ex.: ao carregar projeto). */
-  loadRoomConfig: (snapshot: { walls: Wall[]; selectedWallId: string | null; mainWallIndex?: number } | null) => void;
+  loadRoomConfig: (_snapshot: { walls: Wall[]; selectedWallId: string | null; mainWallIndex?: number } | null) => void;
 }
 
 const DEFAULT_WALL: Omit<Wall, "id"> = {
@@ -254,6 +255,6 @@ export const wallStore = createStore<WallStoreState>((set, get) => ({
   },
 }));
 
-export function useWallStore<T>(selector: (state: WallStoreState) => T): T {
+export function useWallStore<T>(selector: (_state: WallStoreState) => T): T {
   return useStore(wallStore, selector);
 }

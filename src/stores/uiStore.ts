@@ -10,8 +10,8 @@ export type SelectedObject =
 export interface UiStoreState {
   selectedTool: string;
   selectedObject: SelectedObject;
-  setSelectedTool: (toolId: string) => void;
-  setSelectedObject: (selected: SelectedObject) => void;
+  setSelectedTool: (_toolId: string) => void;
+  setSelectedObject: (_selected: SelectedObject) => void;
   clearSelection: () => void;
 }
 
@@ -29,6 +29,6 @@ export const uiStore = createStore<UiStoreState>((set) => ({
   },
 }));
 
-export function useUiStore<T>(selector: (state: UiStoreState) => T): T {
+export function useUiStore<T>(selector: (_state: UiStoreState) => T): T {
   return useStore(uiStore, selector);
 }

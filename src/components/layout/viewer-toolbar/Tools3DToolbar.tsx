@@ -16,16 +16,16 @@ export type Tools3DToolbarProps = {
   /** Ferramenta ativa (controlado pelo estado global). */
   activeTool?: Tool3DId;
   /** Chamado ao clicar numa ferramenta; aplica ao viewer via actions.setActiveTool. */
-  onToolSelect?: (toolId: Tool3DId, eventKey: string) => void;
+  onToolSelect?: (_toolId: Tool3DId, _eventKey: string) => void;
   /** Lock (colisão): impede caixas de se sobrepor quando ON. */
   lockEnabled?: boolean;
   /** Alternar Lock. */
   onToggleLock?: () => void;
 };
 
-const btnStyle = {
-  width: 26,
-  height: 26,
+const toolbarButtonStyle = {
+  width: 28,
+  height: 28,
   display: "flex" as const,
   alignItems: "center" as const,
   justifyContent: "center" as const,
@@ -34,7 +34,7 @@ const btnStyle = {
   color: "var(--text-main)",
   fontSize: 12,
   cursor: "pointer" as const,
-  marginLeft: 2,
+  marginLeft: 4,
 };
 
 export default function Tools3DToolbar({
@@ -79,7 +79,7 @@ export default function Tools3DToolbar({
 
   
 
-  const handleClick = (id: Tool3DId, eventKey: string) => {
+  const handleToolSelect = (id: Tool3DId, eventKey: string) => {
     onToolSelect?.(id, eventKey);
   };
 
@@ -91,10 +91,10 @@ export default function Tools3DToolbar({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 2,
-        padding: "4px 10px",
-        background: "rgba(15, 23, 42, 0.7)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        gap: 4,
+        padding: "6px 10px",
+        background: "rgba(15, 23, 42, 0.85)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
       }}
     >
       {TOOLS_3D_ITEMS.map((item) => {
@@ -108,10 +108,10 @@ export default function Tools3DToolbar({
             aria-label={item.tooltip}
             aria-pressed={isActive}
             disabled={!isEnabled}
-            onClick={() => isEnabled && handleClick(item.id, item.eventKey)}
+            onClick={() => isEnabled && handleToolSelect(item.id, item.eventKey)}
             style={{
-              width: 26,
-              height: 26,
+              width: 28,
+              height: 28,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -119,7 +119,7 @@ export default function Tools3DToolbar({
               borderRadius: 4,
               background: isActive ? "rgba(59, 130, 246, 0.25)" : "transparent",
               color: isEnabled ? "var(--text-main)" : "var(--text-muted)",
-              fontSize: 11,
+              fontSize: 12,
               cursor: isEnabled ? "pointer" : "default",
               opacity: isEnabled ? 1 : 0.5,
             }}
@@ -142,18 +142,8 @@ export default function Tools3DToolbar({
           aria-pressed={lockEnabled}
           onClick={onToggleLock}
           style={{
-            width: 26,
-            height: 26,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "none",
-            borderRadius: 4,
+            ...toolbarButtonStyle,
             background: lockEnabled ? "rgba(59, 130, 246, 0.25)" : "transparent",
-            color: "var(--text-main)",
-            fontSize: 12,
-            cursor: "pointer",
-            marginLeft: 2,
           }}
         >
           🔒
@@ -168,7 +158,7 @@ export default function Tools3DToolbar({
           aria-expanded={showCameraMenu}
           onClick={() => setShowCameraMenu(true)}
           style={{
-            ...btnStyle,
+            ...toolbarButtonStyle,
             background: showCameraMenu ? "rgba(59, 130, 246, 0.25)" : "transparent",
           }}
           onMouseEnter={(e) => {
@@ -209,7 +199,7 @@ export default function Tools3DToolbar({
                 manualPosition: true,
               });
             }}
-            style={{ ...btnStyle, background: "transparent" }}
+            style={{ ...toolbarButtonStyle, background: "transparent" }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(255,255,255,0.06)";
             }}
@@ -227,7 +217,7 @@ export default function Tools3DToolbar({
               aria-expanded={showRotationPopup}
               onClick={() => setShowRotationPopup((v) => !v)}
               style={{
-                ...btnStyle,
+                ...toolbarButtonStyle,
                 background: showRotationPopup ? "rgba(59, 130, 246, 0.25)" : "transparent",
               }}
               onMouseEnter={(e) => {

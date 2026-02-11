@@ -8,7 +8,7 @@ export type GerarArquivoConteudo = "cutlist" | "tecnico" | "ambos";
 
 type Props = {
   onClose: () => void;
-  onConfirm: (opcoes: { conteudo: GerarArquivoConteudo; download: boolean }) => void;
+  onConfirm: (_opcoes: { conteudo: GerarArquivoConteudo; download: boolean }) => void;
   hasBoxes: boolean;
   onPdfTecnico: () => void;
   onCutlist: () => void;

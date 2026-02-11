@@ -17,14 +17,8 @@ import type {
  * O viewer real é registrado via registerViewerApi pelo Workspace (adapter de PimoViewerApi).
  * Fluxo: Workspace → createViewerApiAdapter → viewerSync.registerViewerApi(adapter)
  */
-export const useViewerSync = (project: ProjectState): ViewerSync => {
+export const useViewerSync = (_project: ProjectState): ViewerSync => {
   const viewerApiRef = useRef<ViewerApi | null>(null);
-
-  /** Placeholder: sincronizar estado do projeto para o viewer (ex.: posições). */
-  const applyStateToViewer = useCallback(() => {}, []);
-
-  /** Placeholder: extrair estado do viewer para o projeto. */
-  const extractStateFromViewer = useCallback(() => {}, []);
 
   const restoreViewerSnapshot = useCallback((snapshot: ViewerSnapshot | null) => {
     viewerApiRef.current?.restoreSnapshot(snapshot);
@@ -144,9 +138,7 @@ export const useViewerSync = (project: ProjectState): ViewerSync => {
   );
 
   return {
-    notifyChangeSignal: project,
-    applyStateToViewer,
-    extractStateFromViewer,
+    notifyChangeSignal: _project,
     saveViewerSnapshot: () => viewerApiRef.current?.saveSnapshot() ?? null,
     restoreViewerSnapshot,
     registerViewerApi: (api) => {

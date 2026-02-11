@@ -96,9 +96,9 @@ export function tryPlacePiece(
   rotation: number,
   sheetIndex: number
 ): { placement: CutPlacement; newState: SheetState } | null {
-  let cursorX = state.cursorX;
-  let cursorY = state.cursorY;
-  let rowHeight = state.rowHeight;
+  const cursorX = state.cursorX;
+  const cursorY = state.cursorY;
+  const rowHeight = state.rowHeight;
 
   const extraKerf = cursorX > 0 ? kerf : 0;
   const fitsCurrentRow =

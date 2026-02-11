@@ -144,10 +144,7 @@ export default function Workspace({
   useEffect(() => {
     viewerApi.setOnBoxSelected((boxId) => {
       if (boxId) {
-        if (
-          false ||
-          project.selectedWorkspaceBoxId !== boxId
-        ) {
+        if (project.selectedWorkspaceBoxId !== boxId) {
           actions.selectBox(boxId);
         }
         return;
@@ -294,28 +291,31 @@ const [selectedBoxDimensions, setSelectedBoxDimensions] = useState<{ width: numb
     viewerSync.setDimensionsOverlayVisible(isSelectMode);
   }, [isSelectMode, viewerSync]);
 
-// Performance optimization: Event-driven overlay updates instead of polling
-  const [lastSelectedBoxId, setLastSelectedBoxId] = useState<string | null>(null);
-  const [lastDimensions, setLastDimensions] = useState<{ width: number; height: number; depth: number } | null>(null);
-  const [lastOverlayPosition, setLastOverlayPosition] = useState<{ x: number; y: number } | null>(null);
+// Overlay de dimensões: cache em refs para evitar loop (setState nos "last" recriava o callback e retriggava o useEffect).
+  const lastBoxIdRef = useRef<string | null>(null);
+  const lastDimensionsRef = useRef<{ width: number; height: number; depth: number } | null>(null);
+  const lastOverlayPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const updateOverlayPositionRef = useRef<() => void>(() => {});
 
-  // Request animation frame loop for performance optimization
   const updateOverlayPosition = useCallback(() => {
     if (!isSelectMode || !viewerSync) return;
 
-    const currentBoxId = project.selectedWorkspaceBoxId;
+    const currentBoxId = projectRef.current.selectedWorkspaceBoxId;
     const currentDimensions = viewerSync.getSelectedBoxDimensions();
     const currentOverlayPosition = viewerSync.getSelectedBoxScreenPosition();
 
-    // Check if anything has changed
-    const boxChanged = currentBoxId !== lastSelectedBoxId;
+    const lastBoxId = lastBoxIdRef.current;
+    const lastDimensions = lastDimensionsRef.current;
+    const lastOverlayPosition = lastOverlayPositionRef.current;
+
+    const boxChanged = currentBoxId !== lastBoxId;
     const dimensionsChanged = currentDimensions?.width !== lastDimensions?.width ||
       currentDimensions?.height !== lastDimensions?.height ||
       currentDimensions?.depth !== lastDimensions?.depth;
     const positionChanged = currentOverlayPosition?.x !== lastOverlayPosition?.x ||
       currentOverlayPosition?.y !== lastOverlayPosition?.y;
 
-    // Update state only if something changed
     if (boxChanged || dimensionsChanged || positionChanged) {
       if (currentDimensions && currentOverlayPosition) {
         setSelectedBoxDimensions(currentDimensions);
@@ -324,23 +324,29 @@ const [selectedBoxDimensions, setSelectedBoxDimensions] = useState<{ width: numb
         setSelectedBoxDimensions(null);
         setSelectedBoxOverlayPosition(null);
       }
+      lastBoxIdRef.current = currentBoxId;
+      lastDimensionsRef.current = currentDimensions;
+      lastOverlayPositionRef.current = currentOverlayPosition;
 
-      // Update cache
-      setLastSelectedBoxId(currentBoxId);
-      setLastDimensions(currentDimensions);
-      setLastOverlayPosition(currentOverlayPosition);
-
-      // Request next frame
-      requestAnimationFrame(updateOverlayPosition);
+      if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = requestAnimationFrame(() => {
+        rafIdRef.current = null;
+        updateOverlayPositionRef.current();
+      });
     }
-  }, [isSelectMode, lastSelectedBoxId, lastDimensions, lastOverlayPosition, project.selectedWorkspaceBoxId, viewerSync]);
+  }, [isSelectMode, viewerSync]);
+
+  updateOverlayPositionRef.current = updateOverlayPosition;
 
   useEffect(() => {
     if (isSelectMode) {
       updateOverlayPosition();
     }
     return () => {
-      // Clean up animation frame
+      if (rafIdRef.current != null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
     };
   }, [isSelectMode, updateOverlayPosition]);
 
@@ -436,7 +442,7 @@ const [selectedBoxDimensions, setSelectedBoxDimensions] = useState<{ width: numb
   }, [actions, viewerApi]);
 
 return (
-    <main className="workspace-root" style={{ position: "relative", zIndex: 99999 }}>
+    <main className="workspace-root" style={{ position: "relative", zIndex: 0 }}>
       <div className="workspace-canvas">
         <div className="workspace-toolbars" style={{ display: "flex", flexDirection: "column" }}>
           <ViewerToolbar />
@@ -490,7 +496,7 @@ const { x, y } = selectedBoxOverlayPosition;
                   gap: 6,
                   pointerEvents: "none",
                   whiteSpace: "nowrap",
-                  zIndex: 9999,
+                  zIndex: 10,
                   boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
                 }}
               >

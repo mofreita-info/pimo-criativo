@@ -911,17 +911,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     updateWorkspacePosition: (boxId, posicaoX_mm) => {
       updateProject(
         (prev) => {
-        const workspaceBoxes = prev.workspaceBoxes.map((box) =>
-          box.id === boxId ? { ...box, posicaoX_mm } : box
-        );
-        return { ...prev, workspaceBoxes };
+          const workspaceBoxes = prev.workspaceBoxes.map((box) =>
+            box.id === boxId ? { ...box, posicaoX_mm } : box
+          );
+          return { ...prev, workspaceBoxes };
         },
         false
       );
-    },
-
-    updateWorkspaceBoxPosition: (boxId, posicaoX_mm) => {
-      actions.updateWorkspacePosition(boxId, posicaoX_mm);
     },
 
     updateWorkspaceBoxTransform: (boxId, partial) => {

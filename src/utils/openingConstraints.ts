@@ -63,7 +63,9 @@ export function clampOpeningNoOverlap(
   wallLengthMm: number,
   wallHeightMm: number
 ): { horizontalOffsetMm: number; floorOffsetMm: number } {
-  let { horizontalOffsetMm, floorOffsetMm } = clampOpeningToWall(config, wallLengthMm, wallHeightMm);
+  const opening = clampOpeningToWall(config, wallLengthMm, wallHeightMm);
+  let horizontalOffsetMm = opening.horizontalOffsetMm;
+  const floorOffsetMm = opening.floorOffsetMm;
   const others = openings.filter((o) => o.id !== openingId);
 
   for (const other of others) {

@@ -15,7 +15,7 @@ const CAMERA_PRESETS: Array<{ id: CameraViewPreset; label: string }> = [
 ];
 
 export type CameraViewMenuProps = {
-  onSelect: (preset: CameraViewPreset) => void;
+  onSelect: (_preset: CameraViewPreset) => void;
   onClose: () => void;
 };
 

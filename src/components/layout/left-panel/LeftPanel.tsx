@@ -8,6 +8,7 @@ import { LEFT_TOOLBAR_IDS } from "../left-toolbar/LeftToolbar";
 import PainelMoveisUnificado from "./PainelMoveisUnificado";
 import PainelModelosDaCaixa from "./PainelModelosDaCaixa";
 import { useUiStore } from "../../../stores/uiStore";
+import { useToast } from "../../../context/ToastContext";
 
 export type LeftPanelProps = {
   activeTab?: string;
@@ -90,6 +91,7 @@ export default function LeftPanel({ activeTab = "home" }: LeftPanelProps) {
   const setSelectedObject = useUiStore((state) => state.setSelectedObject);
   const setSelectedTool = useUiStore((state) => state.setSelectedTool);
   const { project, actions } = useProject();
+  const { showToast } = useToast();
   const selectedBox = project.workspaceBoxes.find(
     (box) => box.id === project.selectedWorkspaceBoxId
   );
@@ -355,26 +357,21 @@ export default function LeftPanel({ activeTab = "home" }: LeftPanelProps) {
         </Panel>
       )}
 
-      <div className="section-title" style={{ marginTop: 20 }}>
-        {selectedBox
-          ? "Propriedades"
-          : "Definições"}
-      </div>
-      {selectedBox && (
-        <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>
-          Edite largura, altura, profundidade, prateleiras e material abaixo.
-        </p>
+      {!selectedBox && (
+        <div className="section-title" style={{ marginTop: 20 }}>Definições</div>
       )}
 
-      <Panel title="NOME DE PROJETO">
-        <input
-          type="text"
-          value={project.projectName}
-          onChange={(e) => actions.setProjectName(e.target.value)}
-          placeholder="Nome do projeto"
-          className="input input-sm"
-        />
-      </Panel>
+      {!selectedBox && (
+        <Panel title="NOME DE PROJETO">
+          <input
+            type="text"
+            value={project.projectName}
+            onChange={(e) => actions.setProjectName(e.target.value)}
+            placeholder="Nome do projeto"
+            className="input input-sm"
+          />
+        </Panel>
+      )}
 
       <Panel title="Dimensões" description="Valores em milímetros">
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -440,6 +437,24 @@ export default function LeftPanel({ activeTab = "home" }: LeftPanelProps) {
           </div>
         </div>
       </Panel>
+
+      {selectedBox && (
+        <button
+          type="button"
+          className="button button-ghost"
+          style={{ width: "100%", marginBottom: 8 }}
+          onClick={() => {
+            const el = document.querySelector("[data-material-panel]");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "start" });
+            } else {
+              showToast("Seletor de materiais: use o painel direito ou Admin → Materiais.", "info");
+            }
+          }}
+        >
+          Selecionar Material
+        </button>
+      )}
 
       {selectedBox?.cabinetType === "lower" && (
         <Panel title="Pés">
@@ -522,7 +537,7 @@ function NotesField({ projectName }: { projectName: string }) {
     try {
       const saved = localStorage.getItem(storageKey) ?? "";
       setNotes(saved);
-    } catch (e) {
+    } catch {
       /* ignore */
     }
   }, [storageKey]);
@@ -530,7 +545,7 @@ function NotesField({ projectName }: { projectName: string }) {
   useEffect(() => {
     try {
       localStorage.setItem(storageKey, notes);
-    } catch (e) {
+    } catch {
       /* ignore */
     }
   }, [storageKey, notes]);
