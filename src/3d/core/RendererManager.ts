@@ -22,10 +22,6 @@ export class RendererManager {
     this.renderer.setSize(container.clientWidth, container.clientHeight, false);
     if ("outputColorSpace" in this.renderer) {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    } else {
-      (this.renderer as unknown as { outputEncoding: number }).outputEncoding = (THREE as unknown as {
-        sRGBEncoding: number;
-      }).sRGBEncoding;
     }
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     const exposure = options.toneMappingExposure ?? 1.05;
